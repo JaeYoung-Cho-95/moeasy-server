@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class HealthcheckController {
 
-    @GetMapping("/api/healthcheck")
+    @GetMapping("/healthcheck")
     public ResponseEntity<SuccessApiResponseDto<String>> healthCheck() {
         return ResponseEntity.ok(
                 SuccessApiResponseDto.success(
@@ -22,7 +22,7 @@ public class HealthcheckController {
         );
     }
 
-    @GetMapping("/api/fail")
+    @GetMapping("/fail")
     public ResponseEntity<FailApiResponseDto<Object>> getErrorResponse() {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
@@ -34,7 +34,7 @@ public class HealthcheckController {
                 );
     }
 
-    @GetMapping("/api/error")
+    @GetMapping("/error")
     public ResponseEntity<ErrorApiResponseDto<Object>> getFailResponse() {
         ErrorApiResponseDto.ErrorResponse errorResponse = ErrorApiResponseDto.ErrorResponse.builder()
                 .type("ValidationException")
