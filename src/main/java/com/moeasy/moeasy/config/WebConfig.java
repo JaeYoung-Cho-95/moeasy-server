@@ -19,5 +19,14 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true);
+
+        registry.addMapping("/v3/api-docs")
+                .allowedOrigins(
+                        "https://api.mo-easy.com",
+                        "http://localhost:3000"
+                )
+                .allowedMethods("GET")
+                .allowedHeaders("*")
+                .allowCredentials(true);
     }
 }
