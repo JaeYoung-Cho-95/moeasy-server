@@ -44,3 +44,4 @@ mysql-data
 
 ### etc
 .DS_Store
+ssh_connect.sh
