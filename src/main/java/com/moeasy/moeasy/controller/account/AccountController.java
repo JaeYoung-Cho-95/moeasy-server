@@ -11,11 +11,15 @@ import com.moeasy.moeasy.jwt.JwtUtil;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.view.RedirectView;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -32,17 +36,26 @@ public class AccountController {
 
     @Hidden
     @GetMapping("/callback")
-    public ResponseEntity<SuccessApiResponseDto<Map<String, Object>>> callback(HttpServletRequest request) throws Exception {
-        KaKaoDto kakaoInfo = kakaoService.getKakaoInfo(request.getParameter("code"));
+    public RedirectView callback(@RequestParam("code") String code, HttpServletResponse response) throws Exception {
+        KaKaoDto kakaoInfo = kakaoService.getKakaoInfo(code);
 
-        Map<String, Object> data = getData(kakaoInfo);
+        List<String> tokens = getTokens(kakaoInfo);
+        String accessToken = tokens.get(0), refresh_token = tokens.get(1);
 
-        return ResponseEntity.ok()
-                .body(
-                        SuccessApiResponseDto.success(
-                                200, "login success", data
-                        )
-                );
+        ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", refresh_token)
+                .httpOnly(true)
+                .secure(true) // HTTPS 환경에서만 동작
+                .path("/")
+                .maxAge(Duration.ofDays(7))
+                .sameSite("Lax")
+                .build();
+
+
+        response.addHeader("Set-Cookie", refreshCookie.toString());
+
+        // 프론트엔드로 access token 전달
+        String redirectUrl = "https://mo-easy.com/auth/success?token=" + accessToken;
+        return new RedirectView(redirectUrl);
     }
 
     @PostMapping("/refresh")
