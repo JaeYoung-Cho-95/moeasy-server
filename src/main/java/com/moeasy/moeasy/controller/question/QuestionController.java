@@ -2,6 +2,8 @@ package com.moeasy.moeasy.controller.question;
 
 import com.moeasy.moeasy.common.SuccessApiResponseDto;
 import com.moeasy.moeasy.dto.quesiton.MakeQuestionDto;
+import com.moeasy.moeasy.dto.quesiton.MultipleChoiceQuestionDto;
+import com.moeasy.moeasy.dto.quesiton.ShortAnswerQuestionDto;
 import com.moeasy.moeasy.service.question.QuestionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -23,8 +25,8 @@ public class QuestionController {
     @GetMapping("/make")
     public ResponseEntity<SuccessApiResponseDto> makeQuestions(@AuthenticationPrincipal User user) {
 
-        List<Map<String, List<String>>> multipleChoiceQuestions = questionService.makeMultipleChoiceQuestions();
-        List<Map<String, List<String>>> shortAnswerQuestions = questionService.makeShortAnswerQuestions();
+        List<MultipleChoiceQuestionDto> multipleChoiceQuestions = questionService.makeMultipleChoiceQuestions();
+        List<ShortAnswerQuestionDto> shortAnswerQuestions = questionService.makeShortAnswerQuestions();
 
         MakeQuestionDto makeQuestionDto = new MakeQuestionDto(multipleChoiceQuestions, shortAnswerQuestions);
 

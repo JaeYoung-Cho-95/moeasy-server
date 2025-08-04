@@ -9,7 +9,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
-public class MakeQuestionDto {
-    List<MultipleChoiceQuestionDto> multipleChoiceQuestions;
-    List<ShortAnswerQuestionDto> shortAnswerQuestions;
+public class MultipleChoiceQuestionDto {
+    private String question;
+    private List<String> choices;
 }
