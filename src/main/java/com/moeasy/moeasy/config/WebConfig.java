@@ -11,8 +11,8 @@ public class WebConfig implements WebMvcConfigurer {
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
                 .allowedOrigins(
-                        "http://localhost:3000",             // 로컬 (React, Vite 등에서 기본 포트)
-                        "http://127.0.0.1:3000",             // 혹시 IP로 접속할 경우
+                        "http://localhost:5173",             // 로컬 (React, Vite 등에서 기본 포트)
+                        "http://127.0.0.1:5173",             // 혹시 IP로 접속할 경우
                         "https://mo-easy.com",
                         "https://api.mo-easy.com"
                 )
