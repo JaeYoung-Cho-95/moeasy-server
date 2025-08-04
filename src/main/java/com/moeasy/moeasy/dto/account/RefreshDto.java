@@ -7,5 +7,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class RefreshDto {
 
-    private String refresh_token;
+    private String refreshToken;
 }

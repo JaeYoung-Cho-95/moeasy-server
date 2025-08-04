@@ -1,4 +1,4 @@
-package com.moeasy.moeasy.util;
+package com.moeasy.moeasy.jwt;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

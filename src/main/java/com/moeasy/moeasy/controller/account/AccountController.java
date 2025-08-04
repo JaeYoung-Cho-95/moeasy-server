@@ -7,7 +7,7 @@ import com.moeasy.moeasy.dto.account.KaKaoDto;
 import com.moeasy.moeasy.dto.account.RefreshDto;
 import com.moeasy.moeasy.repository.account.RefreshTokenRepository;
 import com.moeasy.moeasy.service.account.KakaoService;
-import com.moeasy.moeasy.util.JwtUtil;
+import com.moeasy.moeasy.jwt.JwtUtil;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.servlet.http.HttpServletRequest;
@@ -55,7 +55,7 @@ public class AccountController {
         String accessToken = authorizationHeader.substring(7);
 
         // 2. Body에서 Refresh Token 추출
-        String providedRefreshToken = refreshTokenRequestDto.getRefresh_token();
+        String providedRefreshToken = refreshTokenRequestDto.getRefreshToken();
         if (providedRefreshToken == null || providedRefreshToken.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(FailApiResponseDto.fail(HttpStatus.BAD_REQUEST.value(), "Request Body에 Refresh Token이 없습니다."));
         }
