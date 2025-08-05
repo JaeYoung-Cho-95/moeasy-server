@@ -54,7 +54,9 @@ public class AccountController {
         response.addHeader("Set-Cookie", refreshCookie.toString());
 
         // 프론트엔드로 access token 전달
-        String redirectUrl = "https://mo-easy.com/auth/success?token=" + accessToken;
+        String redirectUrl = "https://mo-easy.com/auth/success?token=" + accessToken
+                + "&email=" + kakaoInfo.getEmail()
+                + "&name=" + kakaoInfo.getNickname();
         return new RedirectView(redirectUrl);
     }
 
@@ -149,21 +151,5 @@ public class AccountController {
                 );
 
         return Arrays.asList(accessToken, refreshToken);
-    }
-
-    private Map<String, Object> getData(KaKaoDto kakaoInfo) {
-        Map<String, Object> data = new HashMap<>();
-        Map<String, String> token = new HashMap<>();
-
-        List<String> tokens = getTokens(kakaoInfo);
-        String access_token = tokens.get(0), refresh_token = tokens.get(1);
-
-        token.put("access_token", access_token);
-        token.put("refresh_token", refresh_token);
-
-        data.put("name", kakaoInfo.getNickname());
-        data.put("email", kakaoInfo.getEmail());
-        data.put("token", token);
-        return data;
     }
 }
