@@ -24,6 +24,6 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
         // Member 객체를 UserDetails 객체로 변환합니다.
         // 실제로는 Member 엔티티에 저장된 권한(Role) 정보를 세 번째 인자로 넘겨주어야 합니다.
-        return new User(member.getEmail(), "", Collections.emptyList());
+        return new CustomUserDetails(member);
     }
 }
