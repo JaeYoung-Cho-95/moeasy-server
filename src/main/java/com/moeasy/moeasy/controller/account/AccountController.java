@@ -18,7 +18,10 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.view.RedirectView;
+import org.springframework.web.util.UriComponentsBuilder;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -38,7 +41,6 @@ public class AccountController {
     @GetMapping("/callback")
     public RedirectView callback(@RequestParam("code") String code, HttpServletResponse response) throws Exception {
         KaKaoDto kakaoInfo = kakaoService.getKakaoInfo(code);
-
         List<String> tokens = getTokens(kakaoInfo);
         String accessToken = tokens.get(0), refresh_token = tokens.get(1);
 
@@ -53,10 +55,17 @@ public class AccountController {
 
         response.addHeader("Set-Cookie", refreshCookie.toString());
 
+        String encodedNickname = URLEncoder.encode(kakaoInfo.getNickname(), StandardCharsets.UTF_8);
+        String encodedEmail = URLEncoder.encode(kakaoInfo.getEmail(), StandardCharsets.UTF_8);
+
         // 프론트엔드로 access token 전달
-        String redirectUrl = "https://mo-easy.com/auth/success?token=" + accessToken
-                + "&email=" + kakaoInfo.getEmail()
-                + "&name=" + kakaoInfo.getNickname();
+        String redirectUrl = UriComponentsBuilder.fromUriString("https://mo-easy.com/auth/success")
+                .queryParam("token", accessToken)
+                .queryParam("email", encodedEmail)
+                .queryParam("name", encodedNickname) // name에 한글이 있어도 자동으로 인코딩 처리됩니다.
+                .build(false)
+                .toUriString();
+
         return new RedirectView(redirectUrl);
     }
 
