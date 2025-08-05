@@ -1,5 +1,6 @@
 package com.moeasy.moeasy.controller.question;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.zxing.WriterException;
 import com.moeasy.moeasy.common.ErrorApiResponseDto;
 import com.moeasy.moeasy.common.FailApiResponseDto;
@@ -87,13 +88,32 @@ public class QuestionController {
                             )
                     );
         }
-        return ResponseEntity.ok()
-                .body(
-                        SuccessApiResponseDto.success(
-                                200,
-                                "success",
-                                optionalQuestion.get().getContent()
-                        )
-                );
+
+        try {
+            String content = optionalQuestion.get().getContent();
+            ObjectMapper objectMapper = new ObjectMapper();
+            QuestionDto questionDto = objectMapper.readValue(content, QuestionDto.class);
+            return ResponseEntity.ok()
+                    .body(
+                            SuccessApiResponseDto.success(
+                                    200,
+                                    "success",
+                                    questionDto
+                            )
+                    );
+        } catch (IOException e) {
+            ErrorApiResponseDto.ErrorResponse errorResponse = ErrorApiResponseDto.ErrorResponse.builder()
+                    .type("JsonProcessingException")
+                    .errorDetail(e.getMessage())
+                    .build();
+
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(
+                            ErrorApiResponseDto.error(500, errorResponse)
+                    );
+
+        }
+
     }
 }

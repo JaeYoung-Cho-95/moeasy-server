@@ -39,7 +39,7 @@ public class QrCodeService {
     @Autowired private final QuestionRepository questionRepository;
 
     public String getQrCodeS3Url(Long questionId) throws WriterException, IOException {
-        long expires = Instant.now().plus(5, ChronoUnit.MINUTES).toEpochMilli();
+        long expires = Instant.now().plus(7, ChronoUnit.DAYS).toEpochMilli();
         String questionIdStr = questionId.toString();
 
         String dataToSign = "expires=" + expires + "&id=" + questionIdStr;
