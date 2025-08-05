@@ -9,7 +9,7 @@ import java.util.*;
 
 @Service
 @RequiredArgsConstructor
-public class QuestionService {
+public class MakeQuestionService {
     public List<MultipleChoiceQuestionDto> makeMultipleChoiceQuestions() {
         List<MultipleChoiceQuestionDto> questions = new ArrayList<>();
         for (int i=0; i<8; i++) {

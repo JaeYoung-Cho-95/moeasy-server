@@ -1,17 +1,15 @@
 package com.moeasy.moeasy.controller.question;
 
 import com.moeasy.moeasy.common.SuccessApiResponseDto;
-import com.moeasy.moeasy.dto.quesiton.MakeQuestionDto;
+import com.moeasy.moeasy.dto.quesiton.QuestionDto;
 import com.moeasy.moeasy.dto.quesiton.MultipleChoiceQuestionDto;
 import com.moeasy.moeasy.dto.quesiton.ShortAnswerQuestionDto;
-import com.moeasy.moeasy.service.question.QuestionService;
+import com.moeasy.moeasy.service.question.MakeQuestionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.User;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 
@@ -20,19 +18,25 @@ import java.util.*;
 @RequestMapping("question")
 public class QuestionController {
 
-    private final QuestionService questionService;
+    private final MakeQuestionService makeQuestionService;
 
     @GetMapping("/make")
     public ResponseEntity<SuccessApiResponseDto> makeQuestions(@AuthenticationPrincipal User user) {
 
-        List<MultipleChoiceQuestionDto> multipleChoiceQuestions = questionService.makeMultipleChoiceQuestions();
-        List<ShortAnswerQuestionDto> shortAnswerQuestions = questionService.makeShortAnswerQuestions();
+        List<MultipleChoiceQuestionDto> multipleChoiceQuestions = makeQuestionService.makeMultipleChoiceQuestions();
+        List<ShortAnswerQuestionDto> shortAnswerQuestions = makeQuestionService.makeShortAnswerQuestions();
 
-        MakeQuestionDto makeQuestionDto = new MakeQuestionDto(multipleChoiceQuestions, shortAnswerQuestions);
+        QuestionDto QuestionDto = new QuestionDto(multipleChoiceQuestions, shortAnswerQuestions);
 
         return ResponseEntity.ok()
                 .body(SuccessApiResponseDto.success(
-                        200, "successfully generated the problems", makeQuestionDto
+                        200, "successfully generated the problems", QuestionDto
                 ));
     }
+
+//    @PostMapping
+//    public ResponseEntity<SuccessApiResponseDto> saveQuestions(@AuthenticationPrincipal User user, @RequestBody QuestionDto QuestionDto
+//    ) {
+//
+//    }
 }
