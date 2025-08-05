@@ -22,7 +22,7 @@ public class SaveQuestionService {
     private final MemberRepository memberRepository;
     private final ObjectMapper objectMapper;
 
-    public void saveQuestionsJoinUser(Long id, QuestionDto questionDto) {
+    public Question saveQuestionsJoinUser(Long id, QuestionDto questionDto) {
         Optional<Member> findMember = memberRepository.findById(id);
         if (findMember.isEmpty()) throw new IllegalArgumentException("해당 ID의 회원을 찾을 수 없습니다: " + id);
 
@@ -33,7 +33,7 @@ public class SaveQuestionService {
                     .member(member)
                     .content(questionJson)
                     .build();
-            questionRepository.save(question);
+            return questionRepository.save(question);
         } catch (JsonProcessingException e) {
             throw new RuntimeException("\"QuestionDto를 JSON으로 변환하는 중 오류가 발생했습니다. : " + e);
         }

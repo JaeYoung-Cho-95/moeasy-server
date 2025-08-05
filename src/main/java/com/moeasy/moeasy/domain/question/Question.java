@@ -14,7 +14,6 @@ import org.hibernate.type.SqlTypes;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 public class Question {
-
     @Id
     @GeneratedValue
     @Column(name = "question_id")
