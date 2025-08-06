@@ -1,8 +1,9 @@
-package com.moeasy.moeasy.common;
+package com.moeasy.moeasy.response;
 
 import com.moeasy.moeasy.controller.HealthcheckController;
 import com.moeasy.moeasy.controller.account.AccountController;
 import com.moeasy.moeasy.controller.question.QuestionController;
+import com.moeasy.moeasy.response.custom.CustomFailException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -33,5 +34,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ErrorApiResponseDto.error(500, errorResponse));
+    }
+
+    @ExceptionHandler(CustomFailException.class)
+    public ResponseEntity<FailApiResponseDto> handleCustomFailException(CustomFailException e) {
+        log.error("CustomFailException 발생: " + e.getMessage());
+        return ResponseEntity
+                .status(e.getHttpStatus())
+                .body(FailApiResponseDto.fail(e.getCode(), e.getMessage()));
     }
 }

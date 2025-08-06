@@ -1,8 +1,8 @@
 package com.moeasy.moeasy.controller;
 
-import com.moeasy.moeasy.common.ErrorApiResponseDto;
-import com.moeasy.moeasy.common.FailApiResponseDto;
-import com.moeasy.moeasy.common.SuccessApiResponseDto;
+import com.moeasy.moeasy.response.ErrorApiResponseDto;
+import com.moeasy.moeasy.response.FailApiResponseDto;
+import com.moeasy.moeasy.response.SuccessApiResponseDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

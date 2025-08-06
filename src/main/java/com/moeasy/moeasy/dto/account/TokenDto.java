@@ -1,4 +1,4 @@
-package com.moeasy.moeasy.service.account;
+package com.moeasy.moeasy.dto.account;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;

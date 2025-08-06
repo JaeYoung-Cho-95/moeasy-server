@@ -1,7 +1,7 @@
 package com.moeasy.moeasy.jwt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.moeasy.moeasy.common.FailApiResponseDto;
+import com.moeasy.moeasy.response.FailApiResponseDto;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;

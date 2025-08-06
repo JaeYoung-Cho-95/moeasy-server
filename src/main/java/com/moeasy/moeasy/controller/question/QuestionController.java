@@ -2,18 +2,27 @@ package com.moeasy.moeasy.controller.question;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.zxing.WriterException;
-import com.moeasy.moeasy.common.ErrorApiResponseDto;
-import com.moeasy.moeasy.common.FailApiResponseDto;
-import com.moeasy.moeasy.common.SuccessApiResponseDto;
+import com.moeasy.moeasy.response.ErrorApiResponseDto;
+import com.moeasy.moeasy.response.FailApiResponseDto;
+import com.moeasy.moeasy.response.SuccessApiResponseDto;
 import com.moeasy.moeasy.domain.question.Question;
 import com.moeasy.moeasy.dto.quesiton.QuestionDto;
 import com.moeasy.moeasy.dto.quesiton.MultipleChoiceQuestionDto;
 import com.moeasy.moeasy.dto.quesiton.ShortAnswerQuestionDto;
 import com.moeasy.moeasy.dto.quesiton.VerifyQrCodeDto;
+import com.moeasy.moeasy.response.swagger.SwaggerExamples;
 import com.moeasy.moeasy.service.account.CustomUserDetails;
 import com.moeasy.moeasy.service.question.MakeQuestionService;
 import com.moeasy.moeasy.service.question.QrCodeService;
 import com.moeasy.moeasy.service.question.SaveQuestionService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,14 +36,33 @@ import java.util.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("questions")
+@Tag(name = "Question", description = "'설문지' 제작 및 저장 관련 API")
 public class QuestionController {
 
     private final MakeQuestionService makeQuestionService;
     private final SaveQuestionService saveQuestionService;
     private final QrCodeService qrCodeService;
 
+    @Operation(summary = "'설문지' 생성",
+            description = "객관식 및 주관식 문제를 랜덤으로 생성하여 반환합니다.",
+            security = @SecurityRequirement(name = "jwtAuth")
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "문제 생성 성공",
+                    content = @Content(
+                            schema = @Schema(implementation = SuccessApiResponseDto.class),
+                            examples = @ExampleObject(value = SwaggerExamples.MAKE_QUESTION_SUCCESS_EXAMPLE))),
+            @ApiResponse(responseCode = "401", description = "인증 실패",
+                    content = @Content(
+                            schema = @Schema(implementation = FailApiResponseDto.class),
+                            examples = @ExampleObject(value = SwaggerExamples.INVALID_ACCESS_TOKEN_EXAMPLE))),
+            @ApiResponse(responseCode = "500", description = "서버 에러 발생",
+                    content = @Content(
+                            schema = @Schema(implementation = ErrorApiResponseDto.class),
+                            examples = @ExampleObject(value = SwaggerExamples.INTERNAL_SERVER_ERROR_EXAMPLE)))
+    })
     @GetMapping("/make")
-    public ResponseEntity<SuccessApiResponseDto> makeQuestions(@AuthenticationPrincipal User user) {
+    public ResponseEntity<SuccessApiResponseDto> makeQuestions(@AuthenticationPrincipal CustomUserDetails user) {
 
         List<MultipleChoiceQuestionDto> multipleChoiceQuestions = makeQuestionService.makeMultipleChoiceQuestions();
         List<ShortAnswerQuestionDto> shortAnswerQuestions = makeQuestionService.makeShortAnswerQuestions();
@@ -48,33 +76,54 @@ public class QuestionController {
                 ));
     }
 
+    @Operation(summary = "'설문지' 저장 및 QR코드 생성",
+            description = "생성된 설문지를 사용자와 매핑하여 저장하고, 저장된 설문지에 접근할 수 있는 QR코드를 반환합니다.",
+            security = @SecurityRequirement(name = "jwtAuth"))
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "저장 및 QR코드 생성 성공",
+                    content = @Content(
+                            schema = @Schema(implementation = SuccessApiResponseDto.class),
+                            examples = @ExampleObject(value = SwaggerExamples.SAVE_QUESTION_SUCCESS_EXAMPLE))),
+            @ApiResponse(responseCode = "401", description = "인증 실패",
+                    content = @Content(
+                            schema = @Schema(implementation = FailApiResponseDto.class),
+                            examples = @ExampleObject(value = SwaggerExamples.INVALID_ACCESS_TOKEN_EXAMPLE))),
+            @ApiResponse(responseCode = "500", description = "서버 에러 발생 (QR코드 생성 실패 등)",
+                    content = @Content(
+                            schema = @Schema(implementation = ErrorApiResponseDto.class),
+                            examples = @ExampleObject(value = SwaggerExamples.INTERNAL_SERVER_ERROR_EXAMPLE)))
+    })
     @PostMapping
-    public ResponseEntity<?> saveQuestions(@AuthenticationPrincipal CustomUserDetails user, @RequestBody QuestionDto QuestionDto
-    ) {
+    public ResponseEntity<SuccessApiResponseDto> saveQuestions(@AuthenticationPrincipal CustomUserDetails user, @RequestBody QuestionDto QuestionDto
+    ) throws Exception {
         Long id = user.getId();
         Question question = saveQuestionService.saveQuestionsJoinUser(id, QuestionDto);
         Long questionId = question.getId();
         Map<String, String> data = new HashMap<>();
-
-        try {
-            data.put("qrCode", qrCodeService.getQrCodeS3Url(questionId));
-        } catch (WriterException | IOException e) {
-            ErrorApiResponseDto.ErrorResponse errorResponse = ErrorApiResponseDto.ErrorResponse.builder()
-                    .type("WriterException")
-                    .errorDetail(e.getMessage())
-                    .build();
-
-            return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(
-                            ErrorApiResponseDto.error(500, errorResponse)
-                    );
-        }
+        data.put("qrCode", qrCodeService.getQrCodeS3Url(questionId));
 
         return ResponseEntity.ok()
                 .body(SuccessApiResponseDto.success(201, "success", data));
     }
 
+
+    @Operation(summary = "QR코드 검증 및 '설문지' 조회",
+            description = "QR코드를 통해 전달받은 정보(만료시간, 서명)를 검증하고, 유효한 경우 설문지 데이터를 반환합니다. 이 API는 인증이 필요하지 않습니다.",
+            security = {})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "QR코드 검증 및 설문지 조회 성공",
+                    content = @Content(
+                            schema = @Schema(implementation = SuccessApiResponseDto.class),
+                            examples = @ExampleObject(value = SwaggerExamples.MAKE_QUESTION_SUCCESS_EXAMPLE))),
+            @ApiResponse(responseCode = "410", description = "만료되었거나 유효하지 않은 QR 코드",
+                    content = @Content(
+                            schema = @Schema(implementation = FailApiResponseDto.class),
+                            examples = @ExampleObject(value = SwaggerExamples.EXPIRED_QR_CODE_EXAMPLE))),
+            @ApiResponse(responseCode = "500", description = "서버 에러 발생 (설문지 데이터 파싱 오류 등)",
+                    content = @Content(
+                            schema = @Schema(implementation = ErrorApiResponseDto.class),
+                            examples = @ExampleObject(value = SwaggerExamples.INTERNAL_SERVER_ERROR_EXAMPLE)))
+    })
     @PostMapping("/verifyQrCode")
     public ResponseEntity<?> verifyExpireWithSignature(@RequestBody VerifyQrCodeDto verifyQrCodeDto) {
         Optional<Question> optionalQuestion = qrCodeService.verifyQrCode(verifyQrCodeDto);
@@ -114,6 +163,5 @@ public class QuestionController {
                     );
 
         }
-
     }
 }

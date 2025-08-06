@@ -1,16 +1,19 @@
 package com.moeasy.moeasy.controller.account;
 
-import com.moeasy.moeasy.common.ErrorApiResponseDto;
-import com.moeasy.moeasy.common.FailApiResponseDto;
-import com.moeasy.moeasy.common.SuccessApiResponseDto;
+import com.moeasy.moeasy.response.ErrorApiResponseDto;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import com.moeasy.moeasy.response.FailApiResponseDto;
+import com.moeasy.moeasy.response.SuccessApiResponseDto;
 import com.moeasy.moeasy.domain.account.RefreshToken;
 import com.moeasy.moeasy.dto.account.KaKaoDto;
 import com.moeasy.moeasy.dto.account.MobileKakasSdkTokenDto;
 import com.moeasy.moeasy.dto.account.RefreshDto;
 import com.moeasy.moeasy.repository.account.RefreshTokenRepository;
+import com.moeasy.moeasy.response.custom.CustomFailException;
+import com.moeasy.moeasy.response.swagger.SwaggerExamples;
 import com.moeasy.moeasy.service.account.KakaoService;
 import com.moeasy.moeasy.jwt.JwtUtil;
-import com.moeasy.moeasy.service.account.TokenDto;
+import com.moeasy.moeasy.dto.account.TokenDto;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,6 +21,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -87,19 +91,42 @@ public class AccountController {
     /**
      * 모바일 앱 로그인 api
      */
-    @Operation(summary = "모바일 앱 로그인", description = "카카오 SDK 액세스 토큰을 사용하여 로그인하고 JWT 토큰을 발급합니다.")
+    @Operation(
+            summary = "모바일 앱 로그인",
+            description = "카카오 SDK 액세스 토큰을 사용하여 로그인하고 JWT 토큰을 발급합니다."
+    )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "로그인 및 회원가입 성공(User 정보 없으면 회원가입 or 로그인)"),
-            @ApiResponse(responseCode = "500", description = "카카오 측과 서버 오류",
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "유효하지 않은 카카오 토큰이거나 사용자 정보를 가져올 수 없는 경우",
             content = @Content(
-                    schema = @Schema(implementation = ErrorApiResponseDto.class)
+                    schema = @Schema(implementation = FailApiResponseDto.class),
+                    examples = @ExampleObject(
+                            value = SwaggerExamples.INVALID_KAKAO_TOKEN_EXAMPLE // 상수 참조
+                    )
             )),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "서버 에러 발생",
+                    content = @Content(
+                            schema = @Schema(implementation = ErrorApiResponseDto.class),
+                            examples = @ExampleObject(
+                                    value = SwaggerExamples.INTERNAL_SERVER_ERROR_EXAMPLE // 상수 참조
+                            )
+                    )),
+
     })
     @PostMapping("/login")
     public ResponseEntity<SuccessApiResponseDto<TokenDto>> appLogin(@RequestBody MobileKakasSdkTokenDto mobileKakasSdkTokenDto) throws Exception {
         String kakaoAccessToken = mobileKakasSdkTokenDto.getAccessToken();
 
         KaKaoDto kakaoInfo = kakaoService.getUserInfoWithToken(kakaoAccessToken);
+
+        if (kakaoInfo == null) {
+            throw new CustomFailException(HttpStatus.UNAUTHORIZED, "유효하지 않은 카카오 토큰이거나 사용자 정보를 가져올 수 없습니다.");
+        }
+
         List<String> tokens = getTokens(kakaoInfo);
         String accessToken = tokens.get(0), refreshToken = tokens.get(1);
 
@@ -113,6 +140,25 @@ public class AccountController {
                 );
     }
 
+    @Operation(
+            summary = "토큰 리프레쉬",
+            description = "accessToken과 RefreshToken을 넘겨줬을 때 만료된 경우 새롭게 생성 후 전달하고, 만료되지 않은 경우 그대로 돌려줍니다.",
+            security = @SecurityRequirement(name = "jwtAuth")
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "토큰 재발급 성공",
+                    content = @Content(
+                            schema = @Schema(implementation = SuccessApiResponseDto.class),
+                            examples = @ExampleObject(value = SwaggerExamples.REISSUE_SUCCESS_EXAMPLE))),
+            @ApiResponse(responseCode = "401", description = "유효하지 않은 토큰",
+                    content = @Content(
+                            schema = @Schema(implementation = FailApiResponseDto.class),
+                            examples = @ExampleObject(value = SwaggerExamples.INVALID_REFRESH_TOKEN_EXAMPLE))),
+            @ApiResponse(responseCode = "500", description = "서버 에러 발생",
+                    content = @Content(
+                            schema = @Schema(implementation = ErrorApiResponseDto.class),
+                            examples = @ExampleObject(value = SwaggerExamples.INTERNAL_SERVER_ERROR_EXAMPLE)))
+    })
     @PostMapping("/refresh")
     public ResponseEntity<?> reissue(HttpServletRequest request, @RequestBody RefreshDto refreshTokenRequestDto) {
         // 1. 헤더에서 Access Token 추출
@@ -179,14 +225,33 @@ public class AccountController {
         storedToken.updateToken(newRefreshToken);
         refreshTokenRepository.save(storedToken);
 
-        Map<String, String> tokenMap = new HashMap<>();
-        tokenMap.put("access_token", newAccessToken);
-        tokenMap.put("refresh_token", newRefreshToken);
+        TokenDto tokenDto = TokenDto.builder()
+                .accessToken(newAccessToken)
+                .refreshToken(newRefreshToken)
+                .build();
 
-        return ResponseEntity.ok(SuccessApiResponseDto.success(200, "토큰이 성공적으로 갱신되었습니다.", tokenMap));
+        return ResponseEntity.ok(SuccessApiResponseDto.success(200, "토큰이 성공적으로 갱신되었습니다.", tokenDto));
     }
 
-
+    @Operation(
+            summary = "로그아웃",
+            description = "accessToken을 Authorization 헤더에 담아 요청하면, 서버에 저장된 refresh token을 삭제하여 로그아웃 처리합니다.",
+            security = @SecurityRequirement(name = "jwtAuth")
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "로그아웃 성공",
+                    content = @Content(
+                            schema = @Schema(implementation = SuccessApiResponseDto.class),
+                            examples = @ExampleObject(value = SwaggerExamples.LOGOUT_SUCCESS_EXAMPLE))),
+            @ApiResponse(responseCode = "401", description = "유효하지 않은 토큰",
+                    content = @Content(
+                            schema = @Schema(implementation = FailApiResponseDto.class),
+                            examples = @ExampleObject(value = SwaggerExamples.INVALID_ACCESS_TOKEN_EXAMPLE))),
+            @ApiResponse(responseCode = "500", description = "서버 에러 발생",
+                    content = @Content(
+                            schema = @Schema(implementation = ErrorApiResponseDto.class),
+                            examples = @ExampleObject(value = SwaggerExamples.INTERNAL_SERVER_ERROR_EXAMPLE)))
+    })
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletRequest request) {
         String accessToken = request.getHeader("Authorization").substring(7);
