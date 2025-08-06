@@ -23,7 +23,7 @@ public class HealthcheckController {
     }
 
     @GetMapping("/fail")
-    public ResponseEntity<FailApiResponseDto<Object>> getErrorResponse() {
+    public ResponseEntity<FailApiResponseDto> getErrorResponse() {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(
@@ -35,7 +35,7 @@ public class HealthcheckController {
     }
 
     @GetMapping("/error")
-    public ResponseEntity<ErrorApiResponseDto<Object>> getFailResponse() {
+    public ResponseEntity<ErrorApiResponseDto> getFailResponse() {
         ErrorApiResponseDto.ErrorResponse errorResponse = ErrorApiResponseDto.ErrorResponse.builder()
                 .type("ValidationException")
                 .errorDetail("server error.")

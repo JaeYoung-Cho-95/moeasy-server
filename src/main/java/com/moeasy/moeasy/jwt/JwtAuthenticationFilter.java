@@ -83,7 +83,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");
 
-        FailApiResponseDto<Object> failResponse = FailApiResponseDto.fail(status.value(), message);
+        FailApiResponseDto failResponse = FailApiResponseDto.fail(status.value(), message);
         response.getWriter().write(objectMapper.writeValueAsString(failResponse));
     }
 }

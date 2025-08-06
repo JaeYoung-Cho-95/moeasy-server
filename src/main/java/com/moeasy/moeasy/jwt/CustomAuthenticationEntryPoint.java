@@ -27,7 +27,7 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");
 
-        FailApiResponseDto<Object> failResponse = FailApiResponseDto.fail(
+        FailApiResponseDto failResponse = FailApiResponseDto.fail(
                 HttpStatus.UNAUTHORIZED.value(),
                 "Authentication failed. Please ensure that the request includes a valid authentication token."
         );

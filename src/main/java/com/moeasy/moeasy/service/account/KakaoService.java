@@ -76,7 +76,7 @@ public class KakaoService {
         return getUserInfoWithToken(accessToken);
     }
 
-    private KaKaoDto getUserInfoWithToken(String accessToken) throws Exception{
+    public KaKaoDto getUserInfoWithToken(String accessToken) throws Exception {
         HttpHeaders headers = new HttpHeaders();
         headers.add("Authorization", "Bearer " + accessToken);
         headers.add("Content-type", "application/x-www-form-urlencoded;charset=utf-8");

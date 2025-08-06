@@ -1,15 +1,24 @@
 package com.moeasy.moeasy.controller.account;
 
+import com.moeasy.moeasy.common.ErrorApiResponseDto;
 import com.moeasy.moeasy.common.FailApiResponseDto;
 import com.moeasy.moeasy.common.SuccessApiResponseDto;
 import com.moeasy.moeasy.domain.account.RefreshToken;
 import com.moeasy.moeasy.dto.account.KaKaoDto;
+import com.moeasy.moeasy.dto.account.MobileKakasSdkTokenDto;
 import com.moeasy.moeasy.dto.account.RefreshDto;
 import com.moeasy.moeasy.repository.account.RefreshTokenRepository;
 import com.moeasy.moeasy.service.account.KakaoService;
 import com.moeasy.moeasy.jwt.JwtUtil;
+import com.moeasy.moeasy.service.account.TokenDto;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.swagger.v3.oas.annotations.Hidden;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +37,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+
+@Tag(name = "Account", description = "계정 관련 API")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("account")
@@ -37,6 +48,10 @@ public class AccountController {
     private final JwtUtil jwtUtil;
     private final RefreshTokenRepository refreshTokenRepository;
 
+    /**
+     * 웹 소셜 로그인 callback (웹은 따로 로그인 없음)
+     */
+    
     @Hidden
     @GetMapping("/callback")
     public RedirectView callback(@RequestParam("code") String code, HttpServletResponse response) throws Exception {
@@ -69,6 +84,35 @@ public class AccountController {
         return new RedirectView(redirectUrl);
     }
 
+    /**
+     * 모바일 앱 로그인 api
+     */
+    @Operation(summary = "모바일 앱 로그인", description = "카카오 SDK 액세스 토큰을 사용하여 로그인하고 JWT 토큰을 발급합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "로그인 및 회원가입 성공(User 정보 없으면 회원가입 or 로그인)"),
+            @ApiResponse(responseCode = "500", description = "카카오 측과 서버 오류",
+            content = @Content(
+                    schema = @Schema(implementation = ErrorApiResponseDto.class)
+            )),
+    })
+    @PostMapping("/login")
+    public ResponseEntity<SuccessApiResponseDto<TokenDto>> appLogin(@RequestBody MobileKakasSdkTokenDto mobileKakasSdkTokenDto) throws Exception {
+        String kakaoAccessToken = mobileKakasSdkTokenDto.getAccessToken();
+
+        KaKaoDto kakaoInfo = kakaoService.getUserInfoWithToken(kakaoAccessToken);
+        List<String> tokens = getTokens(kakaoInfo);
+        String accessToken = tokens.get(0), refreshToken = tokens.get(1);
+
+        return ResponseEntity.ok()
+                .body(
+                        SuccessApiResponseDto.success(200, "login success", TokenDto.builder()
+                                .accessToken(accessToken)
+                                .refreshToken(refreshToken)
+                                .build()
+                        )
+                );
+    }
+
     @PostMapping("/refresh")
     public ResponseEntity<?> reissue(HttpServletRequest request, @RequestBody RefreshDto refreshTokenRequestDto) {
         // 1. 헤더에서 Access Token 추출
@@ -94,7 +138,13 @@ public class AccountController {
             isAccessTokenExpired = true;
             userEmail = e.getClaims().getSubject();
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(FailApiResponseDto.fail(HttpStatus.UNAUTHORIZED.value(), "Access Token이 유효하지 않습니다."));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(
+                            FailApiResponseDto.fail(
+                                    HttpStatus.UNAUTHORIZED.value(),
+                                    "Access Token이 유효하지 않습니다."
+                            )
+                    );
         }
 
         if (!isAccessTokenExpired) {
