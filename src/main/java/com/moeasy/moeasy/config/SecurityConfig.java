@@ -33,7 +33,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         // 로그인, 회원가입 등 인증이 필요 없는 경로는 permitAll()로 설정
                         .requestMatchers(
-                                "questions/verifyQrCode",
+                                "/account/login",
+                                "/questions/verifyQrCode",
                                 "/account/callback",
                                 "/moiz/v3/api-docs/**",
                                 "/moiz/swagger/**",
