@@ -1,19 +1,16 @@
 package com.moeasy.moeasy.controller.account;
 
+import com.moeasy.moeasy.dto.account.*;
 import com.moeasy.moeasy.response.ErrorApiResponseDto;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import com.moeasy.moeasy.response.FailApiResponseDto;
 import com.moeasy.moeasy.response.SuccessApiResponseDto;
 import com.moeasy.moeasy.domain.account.RefreshToken;
-import com.moeasy.moeasy.dto.account.KaKaoDto;
-import com.moeasy.moeasy.dto.account.MobileKakasSdkTokenDto;
-import com.moeasy.moeasy.dto.account.RefreshDto;
 import com.moeasy.moeasy.repository.account.RefreshTokenRepository;
 import com.moeasy.moeasy.response.custom.CustomFailException;
 import com.moeasy.moeasy.response.swagger.SwaggerExamples;
 import com.moeasy.moeasy.service.account.KakaoService;
 import com.moeasy.moeasy.jwt.JwtUtil;
-import com.moeasy.moeasy.dto.account.TokenDto;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
@@ -118,7 +115,7 @@ public class AccountController {
 
     })
     @PostMapping("/login")
-    public ResponseEntity<SuccessApiResponseDto<TokenDto>> appLogin(@RequestBody MobileKakasSdkTokenDto mobileKakasSdkTokenDto) throws Exception {
+    public ResponseEntity<SuccessApiResponseDto<appLoginTokenDto>> appLogin(@RequestBody MobileKakasSdkTokenDto mobileKakasSdkTokenDto) throws Exception {
         String kakaoAccessToken = mobileKakasSdkTokenDto.getAccessToken();
 
         KaKaoDto kakaoInfo = kakaoService.getUserInfoWithToken(kakaoAccessToken);
@@ -132,9 +129,11 @@ public class AccountController {
 
         return ResponseEntity.ok()
                 .body(
-                        SuccessApiResponseDto.success(200, "login success", TokenDto.builder()
+                        SuccessApiResponseDto.success(200, "login success", appLoginTokenDto.builder()
                                 .accessToken(accessToken)
                                 .refreshToken(refreshToken)
+                                .email(kakaoInfo.getEmail())
+                                .name(kakaoInfo.getNickname())
                                 .build()
                         )
                 );
