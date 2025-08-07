@@ -46,3 +46,6 @@ mysql-data
 .DS_Store
 ssh_connect.sh
 ssh_copy_jar.sh
+
+/src/main/java/com/moeasy/moeasy/service/llm/prompt
+/src/main/java/com/moeasy/moeasy/controller/account/AccessTokenController.java
