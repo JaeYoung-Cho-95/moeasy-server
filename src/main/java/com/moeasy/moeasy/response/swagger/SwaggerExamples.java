@@ -114,7 +114,8 @@ public class SwaggerExamples {
               "code": 201,
               "message": "success",
               "data": {
-                "qrCode": "https://your-s3-bucket.s3.amazonaws.com/qr-codes/some-question-id.png"
+                "qrCode": "https://your-s3-bucket.s3.amazonaws.com/qr-codes/some-question-id.png",
+                "url": "https://mo-easy.com/question/252?expires=1545531571960&signature=WbpGdi-VUy54zcxnlkdaWQEdasxuomOf0ZF4IMQQg7gk"
               },
               "timestamp": "2025-08-06T12:05:00.000Z"
             }

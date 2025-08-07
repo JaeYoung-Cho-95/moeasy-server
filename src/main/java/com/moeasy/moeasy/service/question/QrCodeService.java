@@ -23,6 +23,8 @@ import java.security.MessageDigest;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -38,7 +40,7 @@ public class QrCodeService {
     @Autowired private final AwsService awsService;
     @Autowired private final QuestionRepository questionRepository;
 
-    public String getQrCodeS3Url(Long questionId) throws WriterException, IOException {
+    public Map<String, String> getQrCodeS3Url(Long questionId) throws WriterException, IOException {
         long expires = Instant.now().plus(7, ChronoUnit.DAYS).toEpochMilli();
         String questionIdStr = questionId.toString();
 
@@ -46,7 +48,13 @@ public class QrCodeService {
         String signature = createSignature(dataToSign);
 
         String url = "https://mo-easy.com/question/" + questionId.toString() + "?expires=" + expires + "&signature=" + signature;
-        return saveQrCodeToS3(url, questionId.toString());
+        String s3Url = saveQrCodeToS3(url, questionId.toString());
+
+        Map<String, String> response = new HashMap<>();
+        response.put("url", url);
+        response.put("qrCode", s3Url);
+
+        return response;
     }
 
     public BufferedImage makeQrCodeBufferedImage(String url) throws WriterException  {
@@ -59,7 +67,6 @@ public class QrCodeService {
 
     public String saveQrCodeToS3(String url, String questionId) throws WriterException, IOException {
         BufferedImage qrImage = makeQrCodeBufferedImage(url);
-
         return awsService.upload(qrImage, questionId);
     }
 

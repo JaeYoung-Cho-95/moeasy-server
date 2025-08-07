@@ -1,7 +1,6 @@
 package com.moeasy.moeasy.controller.question;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.zxing.WriterException;
 import com.moeasy.moeasy.response.ErrorApiResponseDto;
 import com.moeasy.moeasy.response.FailApiResponseDto;
 import com.moeasy.moeasy.response.SuccessApiResponseDto;
@@ -27,7 +26,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -99,8 +97,7 @@ public class QuestionController {
         Long id = user.getId();
         Question question = saveQuestionService.saveQuestionsJoinUser(id, QuestionDto);
         Long questionId = question.getId();
-        Map<String, String> data = new HashMap<>();
-        data.put("qrCode", qrCodeService.getQrCodeS3Url(questionId));
+        Map<String, String> data = qrCodeService.getQrCodeS3Url(questionId);
 
         return ResponseEntity.ok()
                 .body(SuccessApiResponseDto.success(201, "success", data));
