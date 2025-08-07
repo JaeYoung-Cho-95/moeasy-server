@@ -45,7 +45,7 @@ public class QrCodeService {
         String dataToSign = "expires=" + expires + "&id=" + questionIdStr;
         String signature = createSignature(dataToSign);
 
-        String url = "https://mo-easy.com/question/" + questionId.toString() + "&expires=" + expires + "&signature=" + signature;
+        String url = "https://mo-easy.com/question/" + questionId.toString() + "?expires=" + expires + "&signature=" + signature;
         return saveQrCodeToS3(url, questionId.toString());
     }
 
