@@ -2,6 +2,7 @@ package com.moeasy.moeasy.service.llm.web;
 
 import com.moeasy.moeasy.dto.llm.web.GoogleSearchItem;
 import com.moeasy.moeasy.dto.llm.web.GoogleSearchResponseDto;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -10,13 +11,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class GoogleWebSearchService implements WebSearchService {
 
-    @Value("${google.web-search.secret-key")
+    @Value("${google.web-search.secret-key}")
     private String secretKey;
 
-    @Value("${google.web-search.engine-id")
+    @Value("${google.web-search.engine-id}")
     private String engineId;
 
     private final WebClient webClient = WebClient.create("https://www.googleapis.com/customsearch/v1");
@@ -26,13 +28,15 @@ public class GoogleWebSearchService implements WebSearchService {
         GoogleSearchResponseDto response = webClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .queryParam("key", secretKey)
-                        .queryParam("cs", engineId)
+                        .queryParam("cx", engineId)
                         .queryParam("q", searchWord)
                         .queryParam("num", 3)
                         .build())
                 .retrieve()
                 .bodyToMono(GoogleSearchResponseDto.class)
                 .block();
+
+        log.info(response.toString());
 
         if (response == null || response.getItems() == null) {
             return Collections.emptyList();

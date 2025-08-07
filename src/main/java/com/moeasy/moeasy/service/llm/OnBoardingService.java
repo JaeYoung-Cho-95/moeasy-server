@@ -1,12 +1,12 @@
 package com.moeasy.moeasy.service.llm;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.moeasy.moeasy.dto.llm.ChatRequestDto;
 import com.moeasy.moeasy.dto.llm.ChatResponseDto;
 
-import com.moeasy.moeasy.dto.llm.naver.ContentPart;
-import com.moeasy.moeasy.dto.llm.naver.MessageDto;
-import com.moeasy.moeasy.dto.llm.naver.NaverChatRequestDto;
-import com.moeasy.moeasy.dto.llm.naver.NaverChatResponseDto;
+import com.moeasy.moeasy.dto.llm.naver.*;
+import com.moeasy.moeasy.service.llm.web.GoogleWebSearchService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import lombok.*;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
@@ -30,27 +29,42 @@ public class OnBoardingService implements NaverCloudStudio {
 
     private final ResourceLoader resourceLoader;
     private final WebClient webClient;
+    private final ObjectMapper objectMapper;
 
     public OnBoardingService(ResourceLoader resourceLoader,
                              @Value("${naver.cloud.studio.host}") String host,
-                             @Value("${naver.cloud.studio.auth-token}") String authToken) {
+                             @Value("${naver.cloud.studio.auth-token}") String authToken, ObjectMapper objectMapper) {
         this.resourceLoader = resourceLoader;
+        this.objectMapper = objectMapper;
         this.webClient = WebClient.builder()
                 .baseUrl(host)
                 .defaultHeader("Authorization", "Bearer " + authToken) // 인증 헤더 변경
                 .defaultHeader("Content-Type", "application/json")
                 .build();
-
     }
 
     @Override
-    public String generate(ChatRequestDto request) {
-        String systemPrompt = this.getPromptWithFilePath("prompts/SummarizePrompt.txt");
+    public <T> T chat(String systemPrompt, String userPrompt, Class<T> responseType) {
+        NaverChatResponseDto naverChatResponseDto = getNaverChatResponse(systemPrompt, userPrompt);
 
-        log.info(request.toString());
+        String response;
+        if (naverChatResponseDto != null && "20000".equals(naverChatResponseDto.getStatus().getCode())) {
+            response = cleanResponse(naverChatResponseDto.getFirstTextMessage());
+            try {
+                return objectMapper.readValue(response, responseType);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException("JSON 파싱에 실패했습니다." + e);
+            }
+
+        } else {
+            String errorMessage = naverChatResponseDto != null ? naverChatResponseDto.getStatus().getMessage() : "Unknown error";
+            throw new RuntimeException("네이버 클라우드 API 호출에 실패했습니다: " + errorMessage);
+        }
+    }
+
+    private NaverChatResponseDto getNaverChatResponse(String systemPrompt, String userPrompt) {
         List<ContentPart> systemContent = List.of(new ContentPart("text", systemPrompt, null));
-        List<ContentPart> userContent = List.of(new ContentPart("text", request.getUserMessage(), null));
-
+        List<ContentPart> userContent = List.of(new ContentPart("text", userPrompt, null));
 
         List<MessageDto> messages = List.of(
                 new MessageDto("system", systemContent),
@@ -63,7 +77,7 @@ public class OnBoardingService implements NaverCloudStudio {
                 .stop(List.of())
                 .build();
 
-        NaverChatResponseDto naverChatResponseDto = webClient.post()
+        return webClient.post()
                 .uri("/v3/chat-completions/HCX-005")
                 .bodyValue(naverRequest)
                 .retrieve()
@@ -72,20 +86,6 @@ public class OnBoardingService implements NaverCloudStudio {
                                 .flatMap(errorBody -> Mono.error(new RuntimeException("API call failed: " + errorBody))))
                 .bodyToMono(NaverChatResponseDto.class)
                 .block();
-
-
-        if (naverChatResponseDto != null && "20000".equals(naverChatResponseDto.getStatus().getCode())) {
-            return naverChatResponseDto.getFirstTextMessage();
-        } else {
-            String errorMessage = naverChatResponseDto != null ? naverChatResponseDto.getStatus().getMessage() : "Unknown error";
-            throw new RuntimeException("네이버 클라우드 API 호출에 실패했습니다: " + errorMessage);
-        }
-
-    }
-
-    @Override
-    public ChatResponseDto chat(ChatRequestDto request) {
-        return null;
     }
 
     @Override
@@ -98,15 +98,4 @@ public class OnBoardingService implements NaverCloudStudio {
             throw new RuntimeException("프롬프트 파일을 읽는데 실패했습니다 : " + e.getMessage());
         }
     }
-
-//    public String searchWeb(String string) {
-//
-//    }
-
-
-
-
-
-    // v3 API 응답 DTO (참고: 실제 응답 구조에 따라 수정이 필요할 수 있습니다)
-
 }
