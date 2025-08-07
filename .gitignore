@@ -47,5 +47,7 @@ mysql-data
 ssh_connect.sh
 ssh_copy_jar.sh
 
-/src/main/resources/prompt/
+
+!**/src/main/resources/prompt/*.txt
+/src/main/resources/prompt/*.txt
 /src/main/java/com/moeasy/moeasy/controller/account/AccessTokenController.java
