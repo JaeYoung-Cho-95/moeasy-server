@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 
@@ -85,13 +86,13 @@ public class OnBoardingController {
                             examples = @ExampleObject(value = SwaggerExamples.INTERNAL_SERVER_ERROR_EXAMPLE)))
     })
     @PostMapping("/make")
-    public ResponseEntity<SuccessApiResponseDto<QuestionResponseDto>> makeQuestions(@AuthenticationPrincipal CustomUserDetails user, OnboardingMakeQuestionRequestDto onboardingMakeQuestionRequestDto) {
-
+    public ResponseEntity<SuccessApiResponseDto<QuestionResponseDto>> makeQuestions(@AuthenticationPrincipal CustomUserDetails user, @RequestBody OnboardingMakeQuestionRequestDto onboardingMakeQuestionRequestDto) {
+        String title = makeQuestionService.makeTitle(onboardingMakeQuestionRequestDto);
         List<MultipleChoiceQuestionDto> listMultipleChoicesQuestionDto = makeQuestionService.makeMultipleChoiceQuestions(onboardingMakeQuestionRequestDto);
         List<ShortAnswerQuestionDto> listShortAnswerQuestionDto = makeQuestionService.makeShortAnswerQuestions(onboardingMakeQuestionRequestDto);
 
         QuestionResponseDto questionResponseDto = QuestionResponseDto.builder()
-                .title("sample title")
+                .title(title)
                 .multipleChoiceQuestions(listMultipleChoicesQuestionDto)
                 .shortAnswerQuestions(listShortAnswerQuestionDto)
                 .build();
