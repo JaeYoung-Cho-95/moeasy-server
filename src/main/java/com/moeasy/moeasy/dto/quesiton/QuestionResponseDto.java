@@ -1,20 +1,21 @@
 package com.moeasy.moeasy.dto.quesiton;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
-@NoArgsConstructor
-@AllArgsConstructor
-@Getter
+
+@Data
 public class QuestionResponseDto {
-    String title;
-    List<MultipleChoiceQuestionDto> multipleChoiceQuestions;
-    List<ShortAnswerQuestionDto> shortAnswerQuestions;
-    LocalDateTime createdTime;
-    LocalDateTime expirationTime;
-    boolean expired;
+    private String title;
+    private List<MultipleChoiceQuestionDto> multipleChoiceQuestions;
+    private List<ShortAnswerQuestionDto> shortAnswerQuestions;
+
+    @Builder
+    public QuestionResponseDto(String title, List<MultipleChoiceQuestionDto> multipleChoiceQuestions, List<ShortAnswerQuestionDto> shortAnswerQuestions) {
+        this.title = title;
+        this.multipleChoiceQuestions = multipleChoiceQuestions;
+        this.shortAnswerQuestions = shortAnswerQuestions;
+    }
 }

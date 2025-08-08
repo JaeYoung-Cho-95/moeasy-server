@@ -36,46 +36,9 @@ import java.util.*;
 @Tag(name = "Question", description = "'설문지' 제작 및 저장 관련 API")
 public class QuestionController {
 
-    private final MakeQuestionService makeQuestionService;
     private final SaveQuestionService saveQuestionService;
     private final QrCodeService qrCodeService;
 
-    @Operation(summary = "'설문지' 생성",
-            description = "객관식 및 주관식 문제를 랜덤으로 생성하여 반환합니다.",
-            security = @SecurityRequirement(name = "jwtAuth")
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "문제 생성 성공",
-                    content = @Content(
-                            schema = @Schema(implementation = SuccessApiResponseDto.class),
-                            examples = @ExampleObject(value = SwaggerExamples.MAKE_QUESTION_SUCCESS_EXAMPLE))),
-            @ApiResponse(responseCode = "401", description = "인증 실패",
-                    content = @Content(
-                            schema = @Schema(implementation = FailApiResponseDto.class),
-                            examples = @ExampleObject(value = SwaggerExamples.INVALID_ACCESS_TOKEN_EXAMPLE))),
-            @ApiResponse(responseCode = "500", description = "서버 에러 발생",
-                    content = @Content(
-                            schema = @Schema(implementation = ErrorApiResponseDto.class),
-                            examples = @ExampleObject(value = SwaggerExamples.INTERNAL_SERVER_ERROR_EXAMPLE)))
-    })
-    @GetMapping("/make")
-    public ResponseEntity<SuccessApiResponseDto> makeQuestions(@AuthenticationPrincipal CustomUserDetails user) {
-
-        String title = "샘플 제목입니다.";
-        List<MultipleChoiceQuestionDto> multipleChoiceQuestions = makeQuestionService.makeMultipleChoiceQuestions();
-        List<ShortAnswerQuestionDto> shortAnswerQuestions = makeQuestionService.makeShortAnswerQuestions();
-
-        QuestionRequestDto questionRequestDto = QuestionRequestDto.builder()
-                .title(title)
-                .multipleChoiceQuestions(multipleChoiceQuestions)
-                .shortAnswerQuestions(shortAnswerQuestions)
-                .build();
-
-        return ResponseEntity.ok()
-                .body(SuccessApiResponseDto.success(
-                        200, "successfully generated the problems", questionRequestDto
-                ));
-    }
 
     @Operation(summary = "'설문지' 저장 및 QR코드 생성",
             description = "생성된 설문지를 사용자와 매핑하여 저장하고, 저장된 설문지에 접근할 수 있는 QR코드를 반환합니다.",

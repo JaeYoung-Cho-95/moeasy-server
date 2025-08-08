@@ -1,6 +1,7 @@
 package com.moeasy.moeasy.service.llm;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.moeasy.moeasy.dto.llm.naver.ContentPart;
 import com.moeasy.moeasy.dto.llm.naver.MessageDto;
@@ -49,6 +50,7 @@ public class NaverCloudStudioService implements NaverCloudStudio {
         if (naverChatResponseDto != null && "20000".equals(naverChatResponseDto.getStatus().getCode())) {
             response = cleanResponse(naverChatResponseDto.getFirstTextMessage());
             try {
+                log.info(response);
                 return objectMapper.readValue(response, responseType);
             } catch (JsonProcessingException e) {
                 throw new RuntimeException("JSON 파싱에 실패했습니다." + e);
@@ -59,6 +61,27 @@ public class NaverCloudStudioService implements NaverCloudStudio {
             throw new RuntimeException("네이버 클라우드 API 호출에 실패했습니다: " + errorMessage);
         }
     }
+
+    @Override
+    public <T> T chat(String systemPrompt, String userPrompt, TypeReference<T> typeReference) {
+        NaverChatResponseDto naverChatResponseDto = getNaverChatResponse(systemPrompt, userPrompt);
+
+        String response;
+        if (naverChatResponseDto != null && "20000".equals(naverChatResponseDto.getStatus().getCode())) {
+            response = cleanResponse(naverChatResponseDto.getFirstTextMessage());
+            try {
+                log.info(response);
+                return objectMapper.readValue(response, typeReference);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException("JSON 파싱에 실패했습니다." + e);
+            }
+
+        } else {
+            String errorMessage = naverChatResponseDto != null ? naverChatResponseDto.getStatus().getMessage() : "Unknown error";
+            throw new RuntimeException("네이버 클라우드 API 호출에 실패했습니다: " + errorMessage);
+        }
+    }
+
 
     @Override
     public String getPromptWithFilePath(String promptFilePath) {
@@ -82,7 +105,7 @@ public class NaverCloudStudioService implements NaverCloudStudio {
 
         NaverChatRequestDto naverRequest = NaverChatRequestDto.builder()
                 .messages(messages)
-                .topP(0.8).topK(0).maxTokens(512).temperature(0.5)
+                .topP(0.8).topK(0).maxTokens(2048).temperature(0.5)
                 .stop(List.of())
                 .build();
 

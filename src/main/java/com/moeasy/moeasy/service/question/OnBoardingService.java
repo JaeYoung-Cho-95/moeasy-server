@@ -1,4 +1,4 @@
-package com.moeasy.moeasy.service.llm;
+package com.moeasy.moeasy.service.question;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -7,6 +7,7 @@ import com.moeasy.moeasy.dto.quesiton.OnboardingQuestionDto;
 import com.moeasy.moeasy.dto.quesiton.OnboardingRequestDto;
 import com.moeasy.moeasy.dto.quesiton.enums.ProductType;
 import com.moeasy.moeasy.response.custom.CustomFailException;
+import com.moeasy.moeasy.service.llm.NaverCloudStudioService;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
