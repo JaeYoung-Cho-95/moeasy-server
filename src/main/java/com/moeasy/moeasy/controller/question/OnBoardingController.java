@@ -58,7 +58,7 @@ public class OnBoardingController {
                             schema = @Schema(implementation = ErrorApiResponseDto.class),
                             examples = @ExampleObject(value = SwaggerExamples.INTERNAL_SERVER_ERROR_EXAMPLE)))
     })
-    @GetMapping("/onBoarding")
+    @PostMapping("/onBoarding")
     public ResponseEntity<SuccessApiResponseDto<List<OnboardingQuestionDto>>> testLLM(@AuthenticationPrincipal CustomUserDetails user, @RequestBody OnboardingRequestDto onboardingRequestDto) throws JsonProcessingException {
         List<OnboardingQuestionDto> nextOnBoardingQuestions = onBoardingService.getNextOnBoardingQuestions(onboardingRequestDto);
         return ResponseEntity.ok()
@@ -84,7 +84,7 @@ public class OnBoardingController {
                             schema = @Schema(implementation = ErrorApiResponseDto.class),
                             examples = @ExampleObject(value = SwaggerExamples.INTERNAL_SERVER_ERROR_EXAMPLE)))
     })
-    @GetMapping("/make")
+    @PostMapping("/make")
     public ResponseEntity<SuccessApiResponseDto<QuestionResponseDto>> makeQuestions(@AuthenticationPrincipal CustomUserDetails user, OnboardingMakeQuestionRequestDto onboardingMakeQuestionRequestDto) {
 
         List<MultipleChoiceQuestionDto> listMultipleChoicesQuestionDto = makeQuestionService.makeMultipleChoiceQuestions(onboardingMakeQuestionRequestDto);
