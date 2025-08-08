@@ -11,4 +11,6 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     Member save(Member member);
 
     Optional<Member> findByEmail(String email);
+
+    void removeById(Long id);
 }

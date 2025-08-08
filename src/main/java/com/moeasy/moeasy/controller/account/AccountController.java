@@ -2,6 +2,8 @@ package com.moeasy.moeasy.controller.account;
 
 import com.moeasy.moeasy.dto.account.*;
 import com.moeasy.moeasy.response.ErrorApiResponseDto;
+import com.moeasy.moeasy.service.account.CustomUserDetails;
+import com.moeasy.moeasy.service.account.MemberService;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import com.moeasy.moeasy.response.FailApiResponseDto;
 import com.moeasy.moeasy.response.SuccessApiResponseDto;
@@ -26,6 +28,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.view.RedirectView;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -48,6 +51,7 @@ public class AccountController {
     private final KakaoService kakaoService;
     private final JwtUtil jwtUtil;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final MemberService memberService;
 
     /**
      * 웹 소셜 로그인 callback (웹은 따로 로그인 없음)
@@ -261,6 +265,17 @@ public class AccountController {
         return ResponseEntity.ok(SuccessApiResponseDto.success(200, "logout success", null));
     }
 
+    @Operation(summary = "회원 탈퇴", description = "인증된 사용자의 계정을 삭제합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "회원 탈퇴 성공 (내용 없음)"),
+            @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자"),
+            @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음")
+    })
+    @DeleteMapping
+    public ResponseEntity<Void> deleteAccount(@AuthenticationPrincipal CustomUserDetails user) throws Exception {
+        memberService.deleteMember(user.getId());
+        return ResponseEntity.noContent().build();
+    }
 
     private List<String> getTokens(KaKaoDto kakaoInfo) {
         final String accessToken = jwtUtil.generateAccessToken(kakaoInfo.getEmail());
