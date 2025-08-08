@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.moeasy.moeasy.domain.account.Member;
 import com.moeasy.moeasy.domain.question.Question;
 import com.moeasy.moeasy.dto.quesiton.QuestionDto;
+import com.moeasy.moeasy.dto.quesiton.QuestionRequestDto;
 import com.moeasy.moeasy.repository.account.MemberRepository;
 import com.moeasy.moeasy.repository.question.QuestionRepository;
 import lombok.RequiredArgsConstructor;
@@ -22,16 +23,16 @@ public class SaveQuestionService {
     private final MemberRepository memberRepository;
     private final ObjectMapper objectMapper;
 
-    public Question saveQuestionsJoinUser(Long id, QuestionDto questionDto) {
+    public Question saveQuestionsJoinUser(Long id, QuestionRequestDto questionRequestDto) {
         Optional<Member> findMember = memberRepository.findById(id);
         if (findMember.isEmpty()) throw new IllegalArgumentException("해당 ID의 회원을 찾을 수 없습니다: " + id);
 
         try {
-            String questionJson = objectMapper.writeValueAsString(questionDto);
-            Member member = findMember.get();
+            QuestionDto contentDto = new QuestionDto(questionRequestDto.getMultipleChoiceQuestions(), questionRequestDto.getShortAnswerQuestions());
             Question question = Question.builder()
-                    .member(member)
-                    .content(questionJson)
+                    .member(findMember.get())
+                    .title(questionRequestDto.getTitle())
+                    .content(objectMapper.writeValueAsString(contentDto))
                     .build();
             return questionRepository.save(question);
         } catch (JsonProcessingException e) {

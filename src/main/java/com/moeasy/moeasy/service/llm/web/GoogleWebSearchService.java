@@ -36,8 +36,6 @@ public class GoogleWebSearchService implements WebSearchService {
                 .bodyToMono(GoogleSearchResponseDto.class)
                 .block();
 
-        log.info(response.toString());
-
         if (response == null || response.getItems() == null) {
             return Collections.emptyList();
         }

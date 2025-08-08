@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import java.time.LocalDateTime;
+
 
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -23,13 +25,28 @@ public class Question {
     @JoinColumn(name = "member_id")
     private Member member;
 
+    private String title;
+
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "json")
     private String content;
 
+    private LocalDateTime createdTime;
+    private LocalDateTime expirationTime;
+    private Boolean expired;
+
+
     @Builder
-    private Question(Member member, String content) {
+    private Question(Member member, String title, String content) {
         this.member = member;
+        this.title = title;
         this.content = content;
+    }
+
+    @PrePersist
+    public void onPrePersist() {
+        this.createdTime = LocalDateTime.now();
+        this.expirationTime = this.createdTime.plusWeeks(1);
+        this.expired = true;
     }
 }

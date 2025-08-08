@@ -1,14 +1,11 @@
 package com.moeasy.moeasy.controller.question;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.moeasy.moeasy.dto.quesiton.*;
 import com.moeasy.moeasy.response.ErrorApiResponseDto;
 import com.moeasy.moeasy.response.FailApiResponseDto;
 import com.moeasy.moeasy.response.SuccessApiResponseDto;
 import com.moeasy.moeasy.domain.question.Question;
-import com.moeasy.moeasy.dto.quesiton.QuestionDto;
-import com.moeasy.moeasy.dto.quesiton.MultipleChoiceQuestionDto;
-import com.moeasy.moeasy.dto.quesiton.ShortAnswerQuestionDto;
-import com.moeasy.moeasy.dto.quesiton.VerifyQrCodeDto;
 import com.moeasy.moeasy.response.swagger.SwaggerExamples;
 import com.moeasy.moeasy.service.account.CustomUserDetails;
 import com.moeasy.moeasy.service.question.MakeQuestionService;
@@ -23,6 +20,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -31,6 +29,7 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.util.*;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("questions")
@@ -92,10 +91,10 @@ public class QuestionController {
                             examples = @ExampleObject(value = SwaggerExamples.INTERNAL_SERVER_ERROR_EXAMPLE)))
     })
     @PostMapping
-    public ResponseEntity<SuccessApiResponseDto> saveQuestions(@AuthenticationPrincipal CustomUserDetails user, @RequestBody QuestionDto QuestionDto
+    public ResponseEntity<SuccessApiResponseDto> saveQuestions(@AuthenticationPrincipal CustomUserDetails user, @RequestBody QuestionRequestDto questionRequestDto
     ) throws Exception {
         Long id = user.getId();
-        Question question = saveQuestionService.saveQuestionsJoinUser(id, QuestionDto);
+        Question question = saveQuestionService.saveQuestionsJoinUser(id, questionRequestDto);
         Long questionId = question.getId();
         Map<String, String> data = qrCodeService.getQrCodeS3Url(questionId);
 
@@ -148,6 +147,7 @@ public class QuestionController {
                             )
                     );
         } catch (IOException e) {
+            log.info(e.getMessage());
             ErrorApiResponseDto.ErrorResponse errorResponse = ErrorApiResponseDto.ErrorResponse.builder()
                     .type("JsonProcessingException")
                     .errorDetail(e.getMessage())
