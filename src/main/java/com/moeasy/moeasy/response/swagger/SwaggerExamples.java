@@ -121,4 +121,54 @@ public class SwaggerExamples {
               "timestamp": "2025-08-06T12:05:00.000Z"
             }
             """;
+
+    public static final String OnBoarding_Questions = """
+            {
+              "status": "success",
+              "code": 200,
+              "message": "success",
+              "data": [
+                {
+                  "question": "현재 제품은 어떤 상태인가요?",
+                  "answers": [
+                    "이미 판매 중",
+                    "출시 예정(1개월 이내)",
+                    "출시 예정(3개월 이내)",
+                    "테스트/시범 운영 중",
+                    "판매 종료 예정"
+                  ]
+                },
+                {
+                  "question": "어디서 제품을 구매할 수 있나요?",
+                  "answers": [
+                    "오프라인 매장",
+                    "온라인 쇼핑몰",
+                    "배달앱/주문앱",
+                    "행사/팝업",
+                    "기타"
+                  ]
+                },
+                {
+                  "question": "이 제품의 가격대는 어떻게 되나요?",
+                  "answers": [
+                    "5,000원 미만",
+                    "5,000원 ~ 9,900원",
+                    "10,000원 ~ 19,900원",
+                    "20,000원 이상",
+                    "변동가(옵션별 상이)"
+                  ]
+                }
+              ],
+              "timestamp": "2025-08-08T17:44:25.89016"
+            }
+            """;
+
+    public static final String ONBOARDING_BAD_REQUEST = """
+            {
+              "status": "fail",
+              "code": 400,
+              "message": "요청 형식이 올바르지 않습니다.",
+              "timestamp": "2025-08-08T17:47:06.468638"
+            }
+            """;
 }
