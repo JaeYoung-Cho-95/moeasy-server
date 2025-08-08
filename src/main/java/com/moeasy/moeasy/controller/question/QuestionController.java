@@ -61,15 +61,19 @@ public class QuestionController {
     @GetMapping("/make")
     public ResponseEntity<SuccessApiResponseDto> makeQuestions(@AuthenticationPrincipal CustomUserDetails user) {
 
+        String title = "샘플 제목입니다.";
         List<MultipleChoiceQuestionDto> multipleChoiceQuestions = makeQuestionService.makeMultipleChoiceQuestions();
         List<ShortAnswerQuestionDto> shortAnswerQuestions = makeQuestionService.makeShortAnswerQuestions();
 
-        QuestionDto QuestionDto = new QuestionDto(multipleChoiceQuestions, shortAnswerQuestions);
-
+        QuestionRequestDto questionRequestDto = QuestionRequestDto.builder()
+                .title(title)
+                .multipleChoiceQuestions(multipleChoiceQuestions)
+                .shortAnswerQuestions(shortAnswerQuestions)
+                .build();
 
         return ResponseEntity.ok()
                 .body(SuccessApiResponseDto.success(
-                        200, "successfully generated the problems", QuestionDto
+                        200, "successfully generated the problems", questionRequestDto
                 ));
     }
 
@@ -135,15 +139,24 @@ public class QuestionController {
         }
 
         try {
-            String content = optionalQuestion.get().getContent();
+            Question question = optionalQuestion.get();
+            String content = question.getContent();
             ObjectMapper objectMapper = new ObjectMapper();
             QuestionDto questionDto = objectMapper.readValue(content, QuestionDto.class);
+
+            List<MultipleChoiceQuestionDto> multipleChoiceQuestions = questionDto.getMultipleChoiceQuestions();
+            List<ShortAnswerQuestionDto> shortAnswerQuestions = questionDto.getShortAnswerQuestions();
+
             return ResponseEntity.ok()
                     .body(
                             SuccessApiResponseDto.success(
                                     200,
                                     "success",
-                                    questionDto
+                                    QuestionRequestDto.builder()
+                                            .title(question.getTitle())
+                                            .multipleChoiceQuestions(multipleChoiceQuestions)
+                                            .shortAnswerQuestions(shortAnswerQuestions)
+                                            .build()
                             )
                     );
         } catch (IOException e) {

@@ -78,6 +78,7 @@ public class SwaggerExamples {
               "code": 200,
               "message": "successfully generated the problems",
               "data": {
+                "title": "샘플 데이터 입니다."
                 "multipleChoiceQuestions": [
                   {
                     "question": "다음 중 HTTP 메서드가 아닌 것은?",
