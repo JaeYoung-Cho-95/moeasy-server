@@ -2,6 +2,7 @@ package com.moeasy.moeasy.service.account;
 
 import com.moeasy.moeasy.domain.account.Member;
 import com.moeasy.moeasy.repository.account.MemberRepository;
+import com.moeasy.moeasy.repository.account.RefreshTokenRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +18,8 @@ public class MemberService {
 
     @Autowired
     private final MemberRepository memberRepository;
+    @Autowired
+    private RefreshTokenRepository refreshTokenRepository;
 
     public Optional<Member> findMember(String email) {
         return memberRepository.findByEmail(email);
@@ -33,9 +36,11 @@ public class MemberService {
     }
 
     public void deleteMember(Long id) {
-        if (!memberRepository.existsById(id)) {
-            throw new EntityNotFoundException("Id : " + id + " 에 해당하는 회원을 찾을 수 없습니다.");
-        }
-        memberRepository.removeById(id);
+        Member member = memberRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Id : " + id + " 에 해당하는 회원을 찾을 수 없습니다."));
+
+        memberRepository.removeById(member.getId());
+        refreshTokenRepository.findByUserEmail(member.getEmail())
+                .ifPresent(refreshTokenRepository::delete);
     }
 }

@@ -265,7 +265,7 @@ public class AccountController {
         return ResponseEntity.ok(SuccessApiResponseDto.success(200, "logout success", null));
     }
 
-    @Operation(summary = "회원 탈퇴", description = "인증된 사용자의 계정을 삭제합니다.")
+    @Operation(summary = "회원 탈퇴", description = "인증된 사용자의 계정을 삭제합니다. (설문지, refresh token 모두 cascade 로 삭제됩니다)")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "회원 탈퇴 성공 (내용 없음)"),
             @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자"),
