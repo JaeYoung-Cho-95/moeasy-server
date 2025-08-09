@@ -1,6 +1,7 @@
 package com.moeasy.moeasy.domain.question;
 
 import com.moeasy.moeasy.domain.account.Member;
+import com.moeasy.moeasy.domain.survey.Survey;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -24,6 +25,10 @@ public class Question {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id")
     private Member member;
+
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    @JoinColumn(name = "survey_id")
+    private Survey survey;
 
     private String title;
 
@@ -78,4 +83,10 @@ public class Question {
         this.urlInQrCode = newUrl;
     }
 
+    public void linkSurvey(Survey survey) {
+        this.survey = survey;
+        if (survey != null) {
+            survey.linkQuestion(this);
+        }
+    }
 }
