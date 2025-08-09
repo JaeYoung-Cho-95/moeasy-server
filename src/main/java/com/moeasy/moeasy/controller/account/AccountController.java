@@ -4,6 +4,7 @@ import com.moeasy.moeasy.dto.account.*;
 import com.moeasy.moeasy.response.ErrorApiResponseDto;
 import com.moeasy.moeasy.service.account.CustomUserDetails;
 import com.moeasy.moeasy.service.account.MemberService;
+import com.moeasy.moeasy.service.aws.AwsService;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import com.moeasy.moeasy.response.FailApiResponseDto;
 import com.moeasy.moeasy.response.SuccessApiResponseDto;
@@ -26,6 +27,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -52,6 +54,7 @@ public class AccountController {
     private final JwtUtil jwtUtil;
     private final RefreshTokenRepository refreshTokenRepository;
     private final MemberService memberService;
+    private final AwsService awsService;
 
     /**
      * 웹 소셜 로그인 callback (웹은 따로 로그인 없음)
@@ -288,5 +291,18 @@ public class AccountController {
                 );
 
         return Arrays.asList(accessToken, refreshToken);
+    }
+
+    @GetMapping
+    public ResponseEntity<SuccessApiResponseDto<ProfileDto>> getProfileInfo(@AuthenticationPrincipal CustomUserDetails user) throws Exception {
+        String presignedUrl = awsService.generatePresignedUrl(user.getProfileUrl(), "profile");
+        return ResponseEntity.ok()
+                .body(SuccessApiResponseDto.success(
+                        200, "success", ProfileDto.builder()
+                                .email(user.getEmail())
+                                .name(user.getName())
+                                .profileUrl(presignedUrl)
+                                .build()
+                ));
     }
 }

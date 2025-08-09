@@ -58,7 +58,7 @@ public class AwsService {
         return generatePresignedUrl(fileName, bucket);
     }
 
-    private String generatePresignedUrl(String fileName, String bucket) {
+    public String generatePresignedUrl(String fileName, String bucket) {
         // GetObjectRequest 생성
         GetObjectRequest getObjectRequest = GetObjectRequest.builder()
                 .bucket(bucket.equals("qr_code") ? qr_bucket : profile_bucket)

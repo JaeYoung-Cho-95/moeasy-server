@@ -3,7 +3,9 @@ package com.moeasy.moeasy.service.account;
 
 import com.moeasy.moeasy.domain.account.Member;
 import com.moeasy.moeasy.domain.question.Question;
+import com.moeasy.moeasy.service.aws.AwsService;
 import lombok.Getter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -40,6 +42,10 @@ public class CustomUserDetails implements UserDetails {
 
     public Long getId() {
         return member.getId();
+    }
+
+    public String getProfileUrl() {
+        return member.getProfileUrl();
     }
 
     public List<Question> getQuestions() {
