@@ -39,18 +39,18 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(CustomFailException.class)
     public ResponseEntity<FailApiResponseDto> handleCustomFailException(CustomFailException e) {
-        log.error("CustomFailException 발생: " + e.getMessage());
+        log.error("CustomFailException 발생: " + e.getMessage() + e);
         return ResponseEntity
                 .status(e.getHttpStatus())
                 .body(FailApiResponseDto.fail(e.getCode(), e.getMessage()));
     }
 
     /**
-     * JSON 파싱 오류 등 잘못된 형식의 요청을 처리합니다.
+     * 1JSON 파싱 오류 등 잘못된 형식의 요청을 처리합니다.
      */
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<FailApiResponseDto> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
-        log.warn("잘못된 형식의 JSON 요청: {}", e.getMessage());
+        log.warn("잘못된 형식의 JSON 요청: {}", e.getMessage() + e);
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(FailApiResponseDto.fail(HttpStatus.BAD_REQUEST.value(), "요청 형식이 올바르지 않습니다."));
