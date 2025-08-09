@@ -56,7 +56,6 @@ public class AccountController {
     /**
      * 웹 소셜 로그인 callback (웹은 따로 로그인 없음)
      */
-    
     @Hidden
     @GetMapping("/callback")
     public RedirectView callback(@RequestParam("code") String code, HttpServletResponse response) throws Exception {

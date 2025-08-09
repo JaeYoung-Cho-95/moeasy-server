@@ -23,4 +23,6 @@ public class Member {
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE)
     private List<Question> questions = new ArrayList<>();
+
+    private String profileUrl;
 }

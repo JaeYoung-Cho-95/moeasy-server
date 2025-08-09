@@ -67,7 +67,7 @@ public class QrCodeService {
 
     public String saveQrCodeToS3(String url, String questionId) throws WriterException, IOException {
         BufferedImage qrImage = makeQrCodeBufferedImage(url);
-        return awsService.upload(qrImage, questionId);
+        return awsService.upload(qrImage, questionId, "qr_code");
     }
 
     private String createSignature(String data) {

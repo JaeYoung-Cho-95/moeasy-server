@@ -27,18 +27,25 @@ public class AwsService {
     private final S3Client s3Client;
     private final S3Presigner s3Presigner;
 
-    @Value("${cloud.aws.s3.bucket}")
-    private String bucket;
+    @Value("${cloud.aws.s3.qr_bucket}")
+    private String qr_bucket;
 
-    public String upload(BufferedImage image, String questionId) throws IOException {
+    @Value("${cloud.aws.s3.profile_bucket}")
+    private String profile_bucket;
+
+
+    public String upload(BufferedImage image, String id, String bucket) throws IOException {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         ImageIO.write(image, "png", os);
         byte[] buffer = os.toByteArray();
-        String fileName = questionId + "/" + "qr_code.png";
+
+        String fileName = bucket.equals("qr_code") ?
+                id + "/" + "qr_code.png" :
+                id + "/" + "profile.png";
 
         // 1. PutObjectRequest 생성 (빌더 사용)
         PutObjectRequest putObjectRequest = PutObjectRequest.builder()
-                .bucket(bucket)
+                .bucket(bucket.equals("qr_code") ? qr_bucket : profile_bucket)
                 .key(fileName)
                 .contentType("image/png")
                 .contentLength((long) buffer.length)
@@ -48,13 +55,13 @@ public class AwsService {
         s3Client.putObject(putObjectRequest, RequestBody.fromBytes(buffer));
 
         // 3. Presigned URL 생성
-        return generatePresignedUrl(fileName);
+        return generatePresignedUrl(fileName, bucket);
     }
 
-    private String generatePresignedUrl(String fileName) {
+    private String generatePresignedUrl(String fileName, String bucket) {
         // GetObjectRequest 생성
         GetObjectRequest getObjectRequest = GetObjectRequest.builder()
-                .bucket(bucket)
+                .bucket(bucket.equals("qr_code") ? qr_bucket : profile_bucket)
                 .key(fileName)
                 .build();
 
