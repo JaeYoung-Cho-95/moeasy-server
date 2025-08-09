@@ -34,6 +34,7 @@ public class Question {
     private LocalDateTime createdTime;
     private LocalDateTime expirationTime;
     private Boolean expired;
+    private Integer count;
 
 
     @Builder
@@ -48,5 +49,6 @@ public class Question {
         this.createdTime = LocalDateTime.now();
         this.expirationTime = this.createdTime.plusWeeks(1);
         this.expired = true;
+        this.count = 0;
     }
 }
