@@ -216,4 +216,24 @@ public class SwaggerExamples {
               "timestamp": "2025-08-09T17:32:25.30336"
             }
             """;
+
+    public static final String SURVEY_SAVE_SUCCESS_EXAMPLE = """
+            {
+              "status": "success",
+              "code": 200,
+              "message": "success",
+              "data": null,
+              "timestamp": "2025-08-10T12:00:00.000Z"
+            }
+            """;
+
+    public static final String SURVEY_NOT_FOUND_EXAMPLE = """
+            {
+              "status": "fail",
+              "code": 404,
+              "message": "Id : 702를 통해 조회되는 survey 가 없습니다.",
+              "timestamp": "2025-08-10T12:00:00.000Z"
+            }
+            """;
+
 }

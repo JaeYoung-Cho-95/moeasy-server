@@ -33,4 +33,8 @@ public class Survey {
     public void linkQuestion(Question question) {
         this.question = question;
     }
+
+    public void updateResultsJson(String resultsJson) {
+        this.resultsJson = resultsJson;
+    }
 }

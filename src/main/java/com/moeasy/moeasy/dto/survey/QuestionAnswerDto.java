@@ -1,5 +1,6 @@
 package com.moeasy.moeasy.dto.survey;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.*;
 
@@ -13,6 +14,7 @@ import java.util.Map;
 public class QuestionAnswerDto {
     private Map<String, Object> multipleAnswers;
 
+    @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
     public static QuestionAnswerDto from(Map<String, Object> map) {
         return QuestionAnswerDto.builder()
                 .multipleAnswers(map)

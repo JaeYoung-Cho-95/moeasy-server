@@ -1,16 +1,94 @@
 package com.moeasy.moeasy.service.survey;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.moeasy.moeasy.domain.survey.Survey;
+import com.moeasy.moeasy.dto.survey.QuestionAnswerDto;
+import com.moeasy.moeasy.dto.survey.SurveySaveDto;
+import com.moeasy.moeasy.dto.survey.SurveySaveRequestDto;
 import com.moeasy.moeasy.repository.survey.SurveyRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class SaveSurveyService {
-    @Autowired private final SurveyRepository surveyRepository;
+    private final SurveyRepository surveyRepository;
+    private final ObjectMapper objectMapper;
 
+    public void updateSurvey(SurveySaveRequestDto surveySaveRequestDto) {
+        Survey survey = surveyRepository.findByQuestionId(surveySaveRequestDto.getQuestionId())
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Id : " + surveySaveRequestDto.getQuestionId()  + "를 통해 조회되는 survey 가 없습니다."));
 
+        String resultsJson = survey.getResultsJson();
+
+        try {
+            TypeReference<List<Map<String, QuestionAnswerDto>>> typeRef =
+                    new TypeReference<>() {};
+            List<Map<String, QuestionAnswerDto>> aggregates =
+                    objectMapper.readValue(resultsJson, typeRef);
+
+            for (Map<String, String> answerMap : surveySaveRequestDto.getResults()) {
+                for (Map.Entry<String, String> e : answerMap.entrySet()) {
+                    String question = e.getKey();
+                    String answer = e.getValue();
+
+                    Map<String, QuestionAnswerDto> perQuestion = findByQuestion(aggregates, question);
+                    if (perQuestion == null) {
+                        log.warn("집계 템플릿에서 질문을 찾지 못했습니다. question={}", question);
+                        continue;
+                    }
+
+                    QuestionAnswerDto qa = perQuestion.get(question);
+                    Map<String, Object> counts = qa.getMultipleAnswers();
+                    if (counts == null) {
+                        counts = new LinkedHashMap<>();
+                        counts.put("others", new ArrayList<>());
+                        qa.setMultipleAnswers(counts);
+                    }
+
+                    if (counts.containsKey(answer) && counts.get(answer) instanceof Number) {
+                        Number n = (Number) counts.get(answer);
+                        counts.put(answer, n.intValue() + 1);
+                    } else {
+                        Object othersObj = counts.get("others");
+                        if (!(othersObj instanceof List)) {
+                            othersObj = new ArrayList<>();
+                            counts.put("others", othersObj);
+                        }
+                        @SuppressWarnings("unchecked")
+                        List<Object> others = (List<Object>) othersObj;
+                        others.add(answer);
+                    }
+                }
+            }
+
+            String updatedJson = objectMapper.writeValueAsString(SurveySaveDto.from(aggregates));
+            survey.updateResultsJson(updatedJson);
+            surveyRepository.save(survey);
+        } catch (IOException e) {
+            throw new RuntimeException("Survey results JSON 처리 중 오류가 발생했습니다.", e);
+        }
+
+    }
+
+    private Map<String, QuestionAnswerDto> findByQuestion(
+            List<Map<String, QuestionAnswerDto>> aggregates, String question) {
+        for (Map<String, QuestionAnswerDto> m : aggregates) {
+            if (m.containsKey(question)) return m;
+        }
+        return null;
+    }
 }
