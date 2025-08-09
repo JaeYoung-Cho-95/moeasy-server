@@ -6,11 +6,13 @@ import io.swagger.v3.oas.annotations.servers.Server;
 import jakarta.annotation.PostConstruct;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.util.TimeZone;
 
 @OpenAPIDefinition(servers = {@Server(url = "/", description = "Default Server URL")})
 @SpringBootApplication(exclude = { S3AutoConfiguration.class })
+@EnableScheduling
 public class MoeasyApplication {
 
 	@PostConstruct
