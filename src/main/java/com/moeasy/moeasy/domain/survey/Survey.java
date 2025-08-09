@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -25,6 +27,12 @@ public class Survey {
     @Column(columnDefinition = "json")
     private String resultsJson;
 
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "json")
+    private String summarizeJson;
+
+    private LocalDateTime lastUpdated;
+
     @Builder
     private Survey(String resultsJson) {
         this.resultsJson = resultsJson;
@@ -36,5 +44,9 @@ public class Survey {
 
     public void updateResultsJson(String resultsJson) {
         this.resultsJson = resultsJson;
+    }
+
+    public void updatelastUpdated() {
+        this.lastUpdated = LocalDateTime.now();
     }
 }

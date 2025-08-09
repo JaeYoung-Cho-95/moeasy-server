@@ -80,6 +80,7 @@ public class SaveSurveyService {
 
             String updatedJson = objectMapper.writeValueAsString(SurveySaveDto.from(aggregates));
             survey.updateResultsJson(updatedJson);
+            survey.updatelastUpdated();
             surveyRepository.save(survey);
 
             Question question = survey.getQuestion();
