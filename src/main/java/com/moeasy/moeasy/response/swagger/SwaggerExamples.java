@@ -185,4 +185,35 @@ public class SwaggerExamples {
               "timestamp": "2025-08-08T17:47:06.468638"
             }
             """;
+
+    public static final String QUESTION_LIST_SUCCESS = """
+            {
+              "status": "success",
+              "code": 200,
+              "message": "success",
+              "data": [
+                {
+                  "id": 702,
+                  "title": "third questions",
+                  "createdTime": "2025-08-09T17:32:17.780815",
+                  "expiredTime": "2025-08-16T17:32:17.780815",
+                  "expired": false,
+                  "url": "https://mo-easy.com/question/702?expires=1755333137796&signature=d67uOMAEUHcfUEEOeu6selSVDpHYl-oqQYcHpWSmkIU",
+                  "qrCode": "https://moeasy-qr-images.s3.ap-northeast-2.amazonaws.com/702/qr_code.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20250809T083225Z&X-Amz-SignedHeaders=host&X-Amz-Credential=AKIATQZCSEKJTREXNVOB%2F20250809%2Fap-northeast-2%2Fs3%2Faws4_request&X-Amz-Expires=3600&X-Amz-Signature=71cb7c044c1efcf2714d7537a13afbcc2ee76ccac2d16962a4ea399436166837",
+                  "count": 0
+                },
+                {
+                  "id": 552,
+                  "title": "string",
+                  "createdTime": "2025-08-09T16:11:25.089992",
+                  "expiredTime": null,
+                  "expired": true,
+                  "url": https://mo-easy.com/question/702?expires=1755333137796&signature=d67uOMAEUHcfUEEOeu6selSVDpHYl-oqQYcHpWSmkIU,
+                  "qrCode": "https://moeasy-qr-images.s3.ap-northeast-2.amazonaws.com/552/qr_code.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20250809T083225Z&X-Amz-SignedHeaders=host&X-Amz-Credential=AKIATQZCSEKJTREXNVOB%2F20250809%2Fap-northeast-2%2Fs3%2Faws4_request&X-Amz-Expires=3600&X-Amz-Signature=3309670b8c00b0066ce799799c0e25e0c693c7c805fca349cb8ae1031f2b1269",
+                  "count": 0
+                }
+              ],
+              "timestamp": "2025-08-09T17:32:25.30336"
+            }
+            """;
 }

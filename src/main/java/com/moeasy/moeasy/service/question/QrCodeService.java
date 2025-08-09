@@ -9,10 +9,12 @@ import com.moeasy.moeasy.domain.question.Question;
 import com.moeasy.moeasy.dto.quesiton.VerifyQrCodeDto;
 import com.moeasy.moeasy.repository.question.QuestionRepository;
 import com.moeasy.moeasy.service.aws.AwsService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -40,6 +42,7 @@ public class QrCodeService {
     @Autowired private final AwsService awsService;
     @Autowired private final QuestionRepository questionRepository;
 
+    @Transactional
     public Map<String, String> getQrCodeS3Url(Long questionId) throws WriterException, IOException {
         long expires = Instant.now().plus(7, ChronoUnit.DAYS).toEpochMilli();
         String questionIdStr = questionId.toString();
@@ -50,6 +53,7 @@ public class QrCodeService {
         String url = "https://mo-easy.com/question/" + questionId.toString() + "?expires=" + expires + "&signature=" + signature;
         String s3Url = saveQrCodeToS3(url, questionId.toString());
 
+        saveUrlInQrCode(questionId, url);
         Map<String, String> response = new HashMap<>();
         response.put("url", url);
         response.put("qrCode", s3Url);
@@ -98,5 +102,12 @@ public class QrCodeService {
             return questionRepository.findById(Long.parseLong(verifyQrCodeDto.getQuestionId()));
         }
         return Optional.empty();
+    }
+
+    public void saveUrlInQrCode(Long questiondId, String url) {
+        Question question = questionRepository.findById(questiondId)
+                .orElseThrow(() -> new EntityNotFoundException("Question not found : " + questiondId));
+
+        question.updateUrlInQrCode(url);
     }
 }

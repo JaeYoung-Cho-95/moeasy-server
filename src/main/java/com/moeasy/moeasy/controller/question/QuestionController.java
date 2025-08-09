@@ -8,8 +8,9 @@ import com.moeasy.moeasy.response.SuccessApiResponseDto;
 import com.moeasy.moeasy.domain.question.Question;
 import com.moeasy.moeasy.response.swagger.SwaggerExamples;
 import com.moeasy.moeasy.service.account.CustomUserDetails;
-import com.moeasy.moeasy.service.question.MakeQuestionService;
+import com.moeasy.moeasy.service.aws.AwsService;
 import com.moeasy.moeasy.service.question.QrCodeService;
+import com.moeasy.moeasy.service.question.QuestionService;
 import com.moeasy.moeasy.service.question.SaveQuestionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -38,6 +39,8 @@ public class QuestionController {
 
     private final SaveQuestionService saveQuestionService;
     private final QrCodeService qrCodeService;
+    private final QuestionService questionService;
+    private final AwsService awsService;
 
 
     @Operation(summary = "'설문지' 저장 및 QR코드 생성",
@@ -136,5 +139,44 @@ public class QuestionController {
                     );
 
         }
+    }
+
+
+    @Operation(summary = "생성한 설문지 list 일괄 조회",
+            description = "accesstoken 을 header 에 담아 전달해주면 해당 유저의 설문지 리스트를 반환합니다.",
+            security = {})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "섫문지 조회",
+                    content = @Content(
+                            schema = @Schema(implementation = SuccessApiResponseDto.class),
+                            examples = @ExampleObject(value = SwaggerExamples.QUESTION_LIST_SUCCESS))),
+            @ApiResponse(responseCode = "401", description = "유효하지 않은 토큰",
+                    content = @Content(
+                            schema = @Schema(implementation = FailApiResponseDto.class),
+                            examples = @ExampleObject(value = SwaggerExamples.INVALID_ACCESS_TOKEN_EXAMPLE))),
+            @ApiResponse(responseCode = "500", description = "서버 에러 발생 (설문지 데이터 파싱 오류 등)",
+                    content = @Content(
+                            schema = @Schema(implementation = ErrorApiResponseDto.class),
+                            examples = @ExampleObject(value = SwaggerExamples.INTERNAL_SERVER_ERROR_EXAMPLE)))
+    })
+    @GetMapping
+    public ResponseEntity<SuccessApiResponseDto> getQuestions(@AuthenticationPrincipal CustomUserDetails user) {
+        List<Question> questions = questionService.findAllByMemberAndRefresh(user.getId());
+        List<QuestionListDto> data = questions.stream()
+                .map(q -> QuestionListDto.builder()
+                        .id(q.getId())
+                        .title(q.getTitle())
+                        .createdTime(q.getCreatedTime())
+                        .expiredTime(q.getExpiredTime())
+                        .url(q.getUrlInQrCode())
+                        .qrCode(awsService.generatePresignedUrl(q.getId() + "/qr_code.png", "qr_code"))
+                        .expired(q.getExpired())
+                        .count(q.getCount())
+                        .build()
+                ).toList();
+
+        return ResponseEntity.ok()
+                .body(SuccessApiResponseDto.success(200, "success", data));
+
     }
 }

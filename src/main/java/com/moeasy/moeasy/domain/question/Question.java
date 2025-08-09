@@ -32,9 +32,12 @@ public class Question {
     private String content;
 
     private LocalDateTime createdTime;
-    private LocalDateTime expirationTime;
+    private LocalDateTime expiredTime;
     private Boolean expired;
     private Integer count;
+
+    @Column(length = 2048)
+    private String urlInQrCode;
 
 
     @Builder
@@ -47,8 +50,32 @@ public class Question {
     @PrePersist
     public void onPrePersist() {
         this.createdTime = LocalDateTime.now();
-        this.expirationTime = this.createdTime.plusWeeks(1);
-        this.expired = true;
+        this.expiredTime = this.createdTime.plusWeeks(1);
+        this.expired = false;
+        this.urlInQrCode = "";
         this.count = 0;
     }
+
+    public boolean refreshExpired(LocalDateTime now) {
+        if (Boolean.TRUE.equals(this.expired)) {
+            return false;
+        }
+        if (this.expiredTime != null && !this.expiredTime.isAfter(now)) {
+            this.expired = true;
+            return true;
+        }
+        return false;
+    }
+
+    public boolean refreshExpired() {
+        return refreshExpired(LocalDateTime.now());
+    }
+
+    public void updateUrlInQrCode(String newUrl) {
+        if (Boolean.TRUE.equals(this.expired)) {
+            throw new IllegalStateException("만료된 질문의 QR URL은 수정할 수 없습니다.");
+        }
+        this.urlInQrCode = newUrl;
+    }
+
 }
