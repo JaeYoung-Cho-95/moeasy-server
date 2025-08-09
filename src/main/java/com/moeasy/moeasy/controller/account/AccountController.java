@@ -27,7 +27,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -121,7 +120,7 @@ public class AccountController {
 
     })
     @PostMapping("/login")
-    public ResponseEntity<SuccessApiResponseDto<appLoginTokenDto>> appLogin(@RequestBody MobileKakasSdkTokenDto mobileKakasSdkTokenDto) throws Exception {
+    public ResponseEntity<SuccessApiResponseDto<AppLoginTokenDto>> appLogin(@RequestBody MobileKakasSdkTokenDto mobileKakasSdkTokenDto) throws Exception {
         String kakaoAccessToken = mobileKakasSdkTokenDto.getAccessToken();
 
         KaKaoDto kakaoInfo = kakaoService.getUserInfoWithToken(kakaoAccessToken);
@@ -135,7 +134,7 @@ public class AccountController {
 
         return ResponseEntity.ok()
                 .body(
-                        SuccessApiResponseDto.success(200, "login success", appLoginTokenDto.builder()
+                        SuccessApiResponseDto.success(200, "login success", AppLoginTokenDto.builder()
                                 .accessToken(accessToken)
                                 .refreshToken(refreshToken)
                                 .email(kakaoInfo.getEmail())

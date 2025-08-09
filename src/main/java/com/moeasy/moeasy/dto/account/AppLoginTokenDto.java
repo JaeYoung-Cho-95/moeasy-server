@@ -6,7 +6,7 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class appLoginTokenDto {
+public class AppLoginTokenDto {
     @Schema(description = "서버 access token", example = "asdkzxcnkoawej1239adjkcmz.asdklsadnkcx...")
     private String accessToken;
 
