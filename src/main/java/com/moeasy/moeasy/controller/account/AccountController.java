@@ -293,6 +293,22 @@ public class AccountController {
         return Arrays.asList(accessToken, refreshToken);
     }
 
+
+    @Operation(
+            summary = "유저 정보 조회",
+            description = "accessToken을 Authorization 헤더에 담아 요청하면, name / email / profile url 을 반환합니다.",
+            security = @SecurityRequirement(name = "jwtAuth")
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "조회 성송",
+                    content = @Content(
+                            schema = @Schema(implementation = SuccessApiResponseDto.class),
+                            examples = @ExampleObject(value = SwaggerExamples.SUCCESS_LOGIN_EXAMPLE))),
+            @ApiResponse(responseCode = "401", description = "유효하지 않은 토큰",
+                    content = @Content(
+                            schema = @Schema(implementation = FailApiResponseDto.class),
+                            examples = @ExampleObject(value = SwaggerExamples.INVALID_ACCESS_TOKEN_EXAMPLE))),
+    })
     @GetMapping
     public ResponseEntity<SuccessApiResponseDto<ProfileDto>> getProfileInfo(@AuthenticationPrincipal CustomUserDetails user) throws Exception {
         String presignedUrl = awsService.generatePresignedUrl(user.getProfileUrl(), "profile");

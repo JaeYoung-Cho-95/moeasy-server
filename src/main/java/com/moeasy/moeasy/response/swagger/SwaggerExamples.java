@@ -54,6 +54,20 @@ public class SwaggerExamples {
             }
             """;
 
+    public static final String SUCCESS_LOGIN_EXAMPLE = """
+            {
+                "status": "success",
+                "code": 200,
+                "message": "success",
+                "data": {
+                    "email": "whwo9745@naver.com",
+                    "name": "조재영",
+                    "profileUrl": "https://moeasy-profile.s3.ap-northeast-2.amazonaws.com/152/profile.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20250809T065205Z&X-Amz-SignedHeaders=host&X-Amz-Credential=AKIATQZCSEKJTREXNVOB%2F20250809%2Fap-northeast-2%2Fs3%2Faws4_request&X-Amz-Expires=3600&X-Amz-Signature=0513f418ac9752714c9a7a293d76d9ef17da0a83924396303cd387703e5ba5d3"
+                },
+                "timestamp": "2025-08-09T15:52:05.824034"
+            }
+            """;
+
     public static final String INVALID_REFRESH_TOKEN_EXAMPLE = """
             {
                 "status": "fail",
