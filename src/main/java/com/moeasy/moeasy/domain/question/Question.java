@@ -89,4 +89,11 @@ public class Question {
             survey.linkQuestion(this);
         }
     }
+
+    public void increaseCount() {
+        if (this.count == null) {
+            this.count = 0;
+        }
+        this.count += 1;
+    }
 }

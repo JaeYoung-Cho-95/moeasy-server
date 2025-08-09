@@ -2,10 +2,12 @@ package com.moeasy.moeasy.service.survey;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.moeasy.moeasy.domain.question.Question;
 import com.moeasy.moeasy.domain.survey.Survey;
 import com.moeasy.moeasy.dto.survey.QuestionAnswerDto;
 import com.moeasy.moeasy.dto.survey.SurveySaveDto;
 import com.moeasy.moeasy.dto.survey.SurveySaveRequestDto;
+import com.moeasy.moeasy.repository.question.QuestionRepository;
 import com.moeasy.moeasy.repository.survey.SurveyRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +27,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class SaveSurveyService {
     private final SurveyRepository surveyRepository;
+    private final QuestionRepository questionRepository;
     private final ObjectMapper objectMapper;
 
     public void updateSurvey(SurveySaveRequestDto surveySaveRequestDto) {
@@ -78,6 +81,15 @@ public class SaveSurveyService {
             String updatedJson = objectMapper.writeValueAsString(SurveySaveDto.from(aggregates));
             survey.updateResultsJson(updatedJson);
             surveyRepository.save(survey);
+
+            Question question = survey.getQuestion();
+            if (question == null) {
+                log.warn("Survey(id={})에 연결된 Question이 없습니다.", survey.getId());
+            } else {
+                question.increaseCount();
+                // 트랜잭션 내 더티체킹으로도 반영되지만 명시적으로 저장합니다.
+                questionRepository.save(question);
+            }
         } catch (IOException e) {
             throw new RuntimeException("Survey results JSON 처리 중 오류가 발생했습니다.", e);
         }
