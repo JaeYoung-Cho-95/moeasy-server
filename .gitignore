@@ -45,6 +45,7 @@ mysql-data
 ### etc
 .DS_Store
 ssh_connect.sh
+ssm_tunnel.sh
 copy_jar_to_server.sh
 
 
