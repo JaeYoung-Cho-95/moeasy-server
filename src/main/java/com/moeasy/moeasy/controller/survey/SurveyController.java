@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @Slf4j
 @RequestMapping("survey")
-@Tag(name = "Suvery", description = "'설문지' 응답 관련 API")
+@Tag(name = "Survey", description = "'설문지' 응답 관련 API")
 @RequiredArgsConstructor
 public class SurveyController {
 
