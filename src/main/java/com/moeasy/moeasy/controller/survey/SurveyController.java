@@ -23,7 +23,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @Slf4j
-@RequestMapping("survey")
 @Tag(name = "Survey", description = "'설문지' 응답 관련 API")
 @RequiredArgsConstructor
 public class SurveyController {
@@ -49,7 +48,7 @@ public class SurveyController {
                             schema = @Schema(implementation = ErrorApiResponseDto.class),
                             examples = @ExampleObject(value = SwaggerExamples.INTERNAL_SERVER_ERROR_EXAMPLE)))
     })
-    @PostMapping
+    @PostMapping("/survey")
     public SuccessApiResponseDto saveSurvey(@RequestBody SurveySaveRequestDto surveySaveRequestDto) {
         saveSurveyService.updateSurvey(surveySaveRequestDto);
         return SuccessApiResponseDto.success(200, "success", null);
