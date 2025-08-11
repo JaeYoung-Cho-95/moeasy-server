@@ -52,3 +52,6 @@ copy_jar_to_server.sh
 !**/src/main/resources/prompt/*.txt
 /src/main/resources/prompt/*.txt
 /src/main/java/com/moeasy/moeasy/controller/account/AccessTokenController.java
+/src/main/resources/prompts/**.txt
+/src/main/resources/prompts/makeKeywordsUsingSurvey.txt
+/src/main/resources/prompts/
