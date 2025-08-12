@@ -11,4 +11,6 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
     Question save(Question question);
 
     List<Question> findAllByMember_IdOrderByCreatedTimeDesc(Long memberID);
+
+    Question findBySurveyId(Long surveyId);
 }

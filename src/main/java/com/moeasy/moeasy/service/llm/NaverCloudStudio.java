@@ -17,6 +17,8 @@ public interface NaverCloudStudio {
      */
     <T> T chat(String systemPrompt, String userPrompt, TypeReference<T> typeReference);
 
+    <T> T chatHcx007(String systemPrompt, String userPrompt, TypeReference<T> typeReference);
+
 
     /**
      * 여러 번의 질문과 답변을 통해 연속적인 대화

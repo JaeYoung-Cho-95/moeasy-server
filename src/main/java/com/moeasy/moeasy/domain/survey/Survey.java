@@ -46,7 +46,11 @@ public class Survey {
         this.resultsJson = resultsJson;
     }
 
-    public void updatelastUpdated() {
+    public void updateSummarizeJson(String summarizeJson) {
+        this.summarizeJson = summarizeJson;
+    }
+
+    public void updateLastUpdated() {
         this.lastUpdated = LocalDateTime.now();
     }
 }

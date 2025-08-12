@@ -3,10 +3,7 @@ package com.moeasy.moeasy.service.llm;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.moeasy.moeasy.dto.llm.naver.ContentPart;
-import com.moeasy.moeasy.dto.llm.naver.MessageDto;
-import com.moeasy.moeasy.dto.llm.naver.NaverChatRequestDto;
-import com.moeasy.moeasy.dto.llm.naver.NaverChatResponseDto;
+import com.moeasy.moeasy.dto.llm.naver.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -20,7 +17,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 @Slf4j
@@ -70,9 +69,30 @@ public class NaverCloudStudioService implements NaverCloudStudio {
         if (naverChatResponseDto != null && "20000".equals(naverChatResponseDto.getStatus().getCode())) {
             response = cleanResponse(naverChatResponseDto.getFirstTextMessage());
             try {
-                log.info(response);
                 return objectMapper.readValue(response, typeReference);
             } catch (JsonProcessingException e) {
+                throw new RuntimeException("JSON 파싱에 실패했습니다." + e);
+            }
+
+        } else {
+            String errorMessage = naverChatResponseDto != null ? naverChatResponseDto.getStatus().getMessage() : "Unknown error";
+            throw new RuntimeException("네이버 클라우드 API 호출에 실패했습니다: " + errorMessage);
+        }
+    }
+
+    @Override
+    public <T> T chatHcx007(String systemPrompt, String userPrompt, TypeReference<T> typeReference) {
+        NaverChatResponseDto naverChatResponseDto = getNaverChatHcx007Response(systemPrompt, userPrompt);
+
+        String response;
+        if (naverChatResponseDto != null && "20000".equals(naverChatResponseDto.getStatus().getCode())) {
+            response = cleanResponse(naverChatResponseDto.getFirstTextMessage());
+            log.info("response : " + response);
+            try {
+                return objectMapper.readValue(response, typeReference);
+            } catch (JsonProcessingException e) {
+                log.error(e.getOriginalMessage());
+                log.error(e.getMessage());
                 throw new RuntimeException("JSON 파싱에 실패했습니다." + e);
             }
 
@@ -111,6 +131,33 @@ public class NaverCloudStudioService implements NaverCloudStudio {
 
         return webClient.post()
                 .uri("/v3/chat-completions/HCX-005")
+                .bodyValue(naverRequest)
+                .retrieve()
+                .onStatus(httpStatus -> httpStatus.isError(),
+                        clientResponse -> clientResponse.bodyToMono(String.class)
+                                .flatMap(errorBody -> Mono.error(new RuntimeException("API call failed: " + errorBody))))
+                .bodyToMono(NaverChatResponseDto.class)
+                .block();
+    }
+
+    private NaverChatResponseDto getNaverChatHcx007Response(String systemPrompt, String userPrompt) {
+        List<ContentPart> systemContent = List.of(new ContentPart("text", systemPrompt, null));
+        List<ContentPart> userContent = List.of(new ContentPart("text", userPrompt, null));
+
+        List<MessageDto> messages = List.of(
+                new MessageDto("system", systemContent),
+                new MessageDto("user", userContent)
+        );
+        Map<String, String> effort = new HashMap<>();
+        effort.put("effort", "low");
+        NaverChatHcx007RequestDto naverRequest = NaverChatHcx007RequestDto.builder()
+                .messages(messages)
+                .topP(0.8).topK(0).maxCompletionTokens(4096).temperature(0.5).thinking(effort)
+                .stop(List.of())
+                .build();
+
+        return webClient.post()
+                .uri("/v3/chat-completions/HCX-007")
                 .bodyValue(naverRequest)
                 .retrieve()
                 .onStatus(httpStatus -> httpStatus.isError(),
