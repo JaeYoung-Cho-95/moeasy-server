@@ -5,10 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.moeasy.moeasy.domain.account.Member;
 import com.moeasy.moeasy.domain.question.Question;
 import com.moeasy.moeasy.domain.survey.Survey;
-import com.moeasy.moeasy.dto.quesiton.MultipleChoiceQuestionDto;
-import com.moeasy.moeasy.dto.quesiton.QuestionDto;
-import com.moeasy.moeasy.dto.quesiton.QuestionRequestDto;
-import com.moeasy.moeasy.dto.quesiton.ShortAnswerQuestionDto;
+import com.moeasy.moeasy.dto.quesiton.*;
 import com.moeasy.moeasy.dto.survey.QuestionAnswerDto;
 import com.moeasy.moeasy.dto.survey.SurveySaveDto;
 import com.moeasy.moeasy.repository.account.MemberRepository;
@@ -32,20 +29,20 @@ public class SaveQuestionService {
     private final SurveyRepository surveyRepository;
     private final ObjectMapper objectMapper;
 
-    public Question saveQuestionsJoinUser(Long id, QuestionRequestDto questionRequestDto) {
+    public Question saveQuestionsJoinUser(Long id, QuestionsRequestDto questionsRequestDto) {
         Optional<Member> findMember = memberRepository.findById(id);
         if (findMember.isEmpty()) throw new IllegalArgumentException("해당 ID의 회원을 찾을 수 없습니다: " + id);
 
         try {
-            QuestionDto contentDto = new QuestionDto(questionRequestDto.getMultipleChoiceQuestions(), questionRequestDto.getShortAnswerQuestions());
-            List<MultipleChoiceQuestionDto> multipleChoiceQuestions = contentDto.getMultipleChoiceQuestions();
-            List<ShortAnswerQuestionDto> shortAnswerQuestions = contentDto.getShortAnswerQuestions();
+            QuestionsDto contentDto = new QuestionsDto(questionsRequestDto.getMultipleChoiceQuestions(), questionsRequestDto.getShortAnswerQuestions());
+            List<MultipleChoiceIncludeIdQuestionDto> multipleChoiceQuestions = contentDto.getMultipleChoiceQuestions();
+            List<ShortAnswerIncludeIdQuestionDto> shortAnswerQuestions = contentDto.getShortAnswerQuestions();
 
             Survey survey = makeAndGetSurvey(multipleChoiceQuestions, shortAnswerQuestions);
 
             Question question = Question.builder()
                     .member(findMember.get())
-                    .title(questionRequestDto.getTitle())
+                    .title(questionsRequestDto.getTitle())
                     .content(objectMapper.writeValueAsString(contentDto))
                     .build();
             question.linkSurvey(survey);
@@ -56,7 +53,7 @@ public class SaveQuestionService {
         }
     }
 
-    private Survey makeAndGetSurvey(List<MultipleChoiceQuestionDto> multipleChoiceQuestions, List<ShortAnswerQuestionDto> shortAnswerQuestions) throws JsonProcessingException {
+    private Survey makeAndGetSurvey(List<MultipleChoiceIncludeIdQuestionDto> multipleChoiceQuestions, List<ShortAnswerIncludeIdQuestionDto> shortAnswerQuestions) throws JsonProcessingException {
         SurveySaveDto data = getSurveySaveDto(multipleChoiceQuestions, shortAnswerQuestions);
         String surveyJson = objectMapper.writeValueAsString(data);
         Survey survey = Survey.builder()
@@ -66,16 +63,20 @@ public class SaveQuestionService {
         return survey;
     }
 
-    private SurveySaveDto getSurveySaveDto(List<MultipleChoiceQuestionDto> multipleChoiceQuestions, List<ShortAnswerQuestionDto> shortAnswerQuestions) {
+    private SurveySaveDto getSurveySaveDto(List<MultipleChoiceIncludeIdQuestionDto> multipleChoiceQuestions, List<ShortAnswerIncludeIdQuestionDto> shortAnswerQuestions) {
         List<Map<String, QuestionAnswerDto>> temp1 = new ArrayList<>();
-        for (MultipleChoiceQuestionDto multipleChoiceQuestionDto : multipleChoiceQuestions) {
+        for (MultipleChoiceIncludeIdQuestionDto multipleChoiceQuestionDto : multipleChoiceQuestions) {
             String question = multipleChoiceQuestionDto.getQuestion();
             List<String> choices = multipleChoiceQuestionDto.getChoices();
+
+            Long questionId = multipleChoiceQuestionDto.getId();
+            Map<String, Long> temp = new HashMap<>();
+
             temp1.add(extractedSurveyForm(question, choices));
         }
 
         List<Map<String, QuestionAnswerDto>> temp2 = new ArrayList<>();
-        for (ShortAnswerQuestionDto shortAnswerQuestionDto : shortAnswerQuestions) {
+        for (ShortAnswerIncludeIdQuestionDto shortAnswerQuestionDto : shortAnswerQuestions) {
             String question = shortAnswerQuestionDto.getQuestion();
             temp2.add(extractedSurveyForm(question));
         }

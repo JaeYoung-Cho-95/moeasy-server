@@ -61,10 +61,10 @@ public class QuestionController {
                             examples = @ExampleObject(value = SwaggerExamples.INTERNAL_SERVER_ERROR_EXAMPLE)))
     })
     @PostMapping
-    public ResponseEntity<SuccessApiResponseDto> saveQuestions(@AuthenticationPrincipal CustomUserDetails user, @RequestBody QuestionRequestDto questionRequestDto
+    public ResponseEntity<SuccessApiResponseDto> saveQuestions(@AuthenticationPrincipal CustomUserDetails user, @RequestBody QuestionsRequestDto questionsRequestDto
     ) throws Exception {
         Long id = user.getId();
-        Question question = saveQuestionService.saveQuestionsJoinUser(id, questionRequestDto);
+        Question question = saveQuestionService.saveQuestionsJoinUser(id, questionsRequestDto);
         Long questionId = question.getId();
         Map<String, String> data = qrCodeService.getQrCodeS3Url(questionId);
 
