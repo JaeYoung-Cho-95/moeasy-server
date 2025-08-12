@@ -30,7 +30,7 @@ public class SaveSurveyService {
     private final QuestionRepository questionRepository;
     private final ObjectMapper objectMapper;
 
-    public void updateSurvey(SurveySaveRequestDto surveySaveRequestDto) {
+    public Long updateSurvey(SurveySaveRequestDto surveySaveRequestDto) {
         Survey survey = surveyRepository.findByQuestionId(surveySaveRequestDto.getQuestionId())
                 .orElseThrow(() -> new EntityNotFoundException(
                         "Id : " + surveySaveRequestDto.getQuestionId()  + "를 통해 조회되는 survey 가 없습니다."));
@@ -95,6 +95,7 @@ public class SaveSurveyService {
             throw new RuntimeException("Survey results JSON 처리 중 오류가 발생했습니다.", e);
         }
 
+        return survey.getId();
     }
 
     private Map<String, QuestionAnswerDto> findByQuestion(
