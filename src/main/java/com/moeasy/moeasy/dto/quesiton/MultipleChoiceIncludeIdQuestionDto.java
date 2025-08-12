@@ -1,15 +1,15 @@
 package com.moeasy.moeasy.dto.quesiton;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 
 import java.util.List;
 
 
+@Getter
+@Setter
+@NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Data
 public class MultipleChoiceIncludeIdQuestionDto {
     private Long id;
     private Boolean fixFlag;
