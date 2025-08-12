@@ -68,6 +68,7 @@ public class NaverCloudStudioService implements NaverCloudStudio {
         String response;
         if (naverChatResponseDto != null && "20000".equals(naverChatResponseDto.getStatus().getCode())) {
             response = cleanResponse(naverChatResponseDto.getFirstTextMessage());
+            log.info(response);
             try {
                 return objectMapper.readValue(response, typeReference);
             } catch (JsonProcessingException e) {

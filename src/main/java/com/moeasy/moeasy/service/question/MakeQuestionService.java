@@ -1,12 +1,15 @@
 package com.moeasy.moeasy.service.question;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.moeasy.moeasy.dto.quesiton.*;
+import com.moeasy.moeasy.response.custom.CustomFailException;
 import com.moeasy.moeasy.service.llm.NaverCloudStudioService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ResourceLoader;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -14,24 +17,102 @@ import java.util.*;
 @Slf4j
 @Service
 public class MakeQuestionService extends NaverCloudStudioService {
-    private final ResourceLoader resourceLoader;
     private final ObjectMapper objectMapper;
 
     public MakeQuestionService(ResourceLoader resourceLoader,
-                             @Value("${naver.cloud.studio.host}") String host,
-                             @Value("${naver.cloud.studio.auth-token}") String authToken,
-                             ObjectMapper objectMapper) {
+                               @Value("${naver.cloud.studio.host}") String host,
+                               @Value("${naver.cloud.studio.auth-token}") String authToken,
+                               ObjectMapper objectMapper) {
         super(resourceLoader, host, authToken, objectMapper);
-        this.resourceLoader = resourceLoader;
         this.objectMapper = objectMapper;
+    }
+
+    public QuestionResponseDto makeQuestions(OnboardingMakeQuestionRequestDto onboardingMakeQuestionRequestDto) {
+        try {
+            String title = makeTitle(onboardingMakeQuestionRequestDto);
+
+            List<MultipleChoiceQuestionDto> listMultipleChoicesQuestionDto =
+                    makeMultipleChoiceQuestions(onboardingMakeQuestionRequestDto);
+            List<ShortAnswerQuestionDto> listShortAnswerQuestionDto =
+                    makeShortAnswerQuestions(onboardingMakeQuestionRequestDto);
+
+            List<String> ageChoices = Arrays.asList("18–24세", "25–34세", "35–44세", "45–54세", "55세 이상");
+            MultipleChoiceIncludeIdQuestionDto ageQuestionDto = MultipleChoiceIncludeIdQuestionDto.builder()
+                    .id(0L)
+                    .fixFlag(false)
+                    .question("귀하의 연령대를 선택해 주세요.")
+                    .choices(ageChoices)
+                    .build();
+
+            List<String> genderChoices = Arrays.asList("여성", "남성", "해당 없음(논바이너리 등)", "응답 거부");
+            MultipleChoiceIncludeIdQuestionDto genderQuestionDto = MultipleChoiceIncludeIdQuestionDto.builder()
+                    .id(1L)
+                    .fixFlag(false)
+                    .question("귀하의 성별을 선택해 주세요.")
+                    .choices(genderChoices)
+                    .build();
+
+            List<MultipleChoiceIncludeIdQuestionDto> listMultipleChoiceIncludeIdQuestionDto = new ArrayList<>();
+            listMultipleChoiceIncludeIdQuestionDto.add(ageQuestionDto);
+            listMultipleChoiceIncludeIdQuestionDto.add(genderQuestionDto);
+
+            int index = 2;
+            for (MultipleChoiceQuestionDto multipleChoiceQuestionDto : listMultipleChoicesQuestionDto) {
+                listMultipleChoiceIncludeIdQuestionDto.add(
+                        MultipleChoiceIncludeIdQuestionDto.builder()
+                                .id((long) index)
+                                .fixFlag(true)
+                                .question(multipleChoiceQuestionDto.getQuestion())
+                                .choices(multipleChoiceQuestionDto.getChoices())
+                                .build()
+                );
+                index++;
+            }
+
+            List<ShortAnswerIncludeIdQuestionDto> listShortAnswerIncludeIdQuestionsDto = new ArrayList<>();
+            for (ShortAnswerQuestionDto shortAnswerQuestionDto : listShortAnswerQuestionDto) {
+                listShortAnswerIncludeIdQuestionsDto.add(
+                        ShortAnswerIncludeIdQuestionDto.builder()
+                                .id((long) index)
+                                .fixFlag(true)
+                                .question(shortAnswerQuestionDto.getQuestion())
+                                .keywords(shortAnswerQuestionDto.getKeywords())
+                                .build()
+                );
+                index++;
+            }
+
+            return QuestionResponseDto.builder()
+                    .title(title)
+                    .multipleChoiceQuestions(listMultipleChoiceIncludeIdQuestionDto)
+                    .shortAnswerQuestions(listShortAnswerIncludeIdQuestionsDto)
+                    .build();
+
+        } catch (RuntimeException e) {
+            if (isJsonRelated(e)) {
+                throw new CustomFailException(
+                        HttpStatus.BAD_REQUEST,
+                        "입력하신 정보가 부족하거나 형식이 올바르지 않습니다. 조금 더 정확히 작성해 주세요."
+                );
+            }
+            throw e;
+        }
+    }
+
+    private boolean isJsonRelated(Throwable t) {
+        while (t != null) {
+            String msg = t.getMessage() == null ? "" : t.getMessage().toLowerCase();
+            if (t instanceof JsonProcessingException) return true;
+            if (msg.contains("json") || msg.contains("파싱")) return true;
+            t = t.getCause();
+        }
+        return false;
     }
 
     public List<MultipleChoiceQuestionDto> makeMultipleChoiceQuestions(OnboardingMakeQuestionRequestDto onboardingMakeQuestionRequestDto) {
         String systemPrompt = getPromptWithFilePath("prompts/makeMultipleChoicesQuestionsPrompt.txt");
         String userPrompt = extractUserPrompt(onboardingMakeQuestionRequestDto);
-
-        return chat(systemPrompt, userPrompt, new TypeReference<List<MultipleChoiceQuestionDto>>() {
-        });
+        return chat(systemPrompt, userPrompt, new TypeReference<List<MultipleChoiceQuestionDto>>() {});
     }
 
     private String extractUserPrompt(OnboardingMakeQuestionRequestDto dto) {

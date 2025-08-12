@@ -9,9 +9,11 @@ import java.util.List;
 
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 @Getter
-public class MultipleChoiceQuestionDto {
+@Builder
+public class ShortAnswerIncludeIdQuestionDto {
+    private Long id;
+    private Boolean fixFlag;
     private String question;
-    private List<String> choices;
+    private List<String> keywords;
 }

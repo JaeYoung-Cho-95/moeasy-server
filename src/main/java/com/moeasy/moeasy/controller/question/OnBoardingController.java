@@ -5,6 +5,7 @@ import com.moeasy.moeasy.dto.quesiton.*;
 import com.moeasy.moeasy.response.ErrorApiResponseDto;
 import com.moeasy.moeasy.response.FailApiResponseDto;
 import com.moeasy.moeasy.response.SuccessApiResponseDto;
+import com.moeasy.moeasy.response.custom.CustomFailException;
 import com.moeasy.moeasy.response.swagger.SwaggerExamples;
 import com.moeasy.moeasy.service.account.CustomUserDetails;
 import com.moeasy.moeasy.service.question.OnBoardingService;
@@ -87,19 +88,16 @@ public class OnBoardingController {
     })
     @PostMapping("/make")
     public ResponseEntity<SuccessApiResponseDto<QuestionResponseDto>> makeQuestions(@AuthenticationPrincipal CustomUserDetails user, @RequestBody OnboardingMakeQuestionRequestDto onboardingMakeQuestionRequestDto) {
-        String title = makeQuestionService.makeTitle(onboardingMakeQuestionRequestDto);
-        List<MultipleChoiceQuestionDto> listMultipleChoicesQuestionDto = makeQuestionService.makeMultipleChoiceQuestions(onboardingMakeQuestionRequestDto);
-        List<ShortAnswerQuestionDto> listShortAnswerQuestionDto = makeQuestionService.makeShortAnswerQuestions(onboardingMakeQuestionRequestDto);
-
-        QuestionResponseDto questionResponseDto = QuestionResponseDto.builder()
-                .title(title)
-                .multipleChoiceQuestions(listMultipleChoicesQuestionDto)
-                .shortAnswerQuestions(listShortAnswerQuestionDto)
-                .build();
-
         return ResponseEntity.ok()
                 .body(SuccessApiResponseDto.success(
-                        200, "successfully generated the problems", questionResponseDto
+                        200, "successfully generated the problems", makeQuestionService.makeQuestions(onboardingMakeQuestionRequestDto)
                 ));
+    }
+
+    @ExceptionHandler(CustomFailException.class)
+    public ResponseEntity<FailApiResponseDto> handleMakeQuestionsBadRequest(CustomFailException e) {
+        return ResponseEntity
+                .status(e.getHttpStatus())
+                .body(FailApiResponseDto.fail(e.getCode(), e.getMessage()));
     }
 }
