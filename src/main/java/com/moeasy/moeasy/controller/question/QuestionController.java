@@ -108,17 +108,17 @@ public class QuestionController {
             Question question = optionalQuestion.get();
             String content = question.getContent();
             ObjectMapper objectMapper = new ObjectMapper();
-            QuestionDto questionDto = objectMapper.readValue(content, QuestionDto.class);
+            QuestionsDto questionsDto = objectMapper.readValue(content, QuestionsDto.class);
 
-            List<MultipleChoiceQuestionDto> multipleChoiceQuestions = questionDto.getMultipleChoiceQuestions();
-            List<ShortAnswerQuestionDto> shortAnswerQuestions = questionDto.getShortAnswerQuestions();
+            List<MultipleChoiceIncludeIdQuestionDto> multipleChoiceQuestions = questionsDto.getMultipleChoiceQuestions();
+            List<ShortAnswerIncludeIdQuestionDto> shortAnswerQuestions = questionsDto.getShortAnswerQuestions();
 
             return ResponseEntity.ok()
                     .body(
                             SuccessApiResponseDto.success(
                                     200,
                                     "success",
-                                    QuestionRequestDto.builder()
+                                    QuestionsRequestDto.builder()
                                             .title(question.getTitle())
                                             .multipleChoiceQuestions(multipleChoiceQuestions)
                                             .shortAnswerQuestions(shortAnswerQuestions)
