@@ -314,6 +314,18 @@ public class SwaggerExamples {
       }
       """;
 
+  public static final String QUESTION_UPDATE_TITLE = """
+      {
+        "status": "success",
+        "code": 200,
+        "message": "success",
+        "data": {
+          "id" : 1235,
+          "title": "new title 입니다."
+        },
+        "timestamp": "2025-08-09T17:32:25.30336"
+      }
+      """;
 }
 
 

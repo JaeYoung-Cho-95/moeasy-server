@@ -3,6 +3,8 @@ package com.moeasy.moeasy.controller.question;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.moeasy.moeasy.domain.question.Question;
 import com.moeasy.moeasy.dto.quesiton.MultipleChoiceIncludeIdQuestionDto;
+import com.moeasy.moeasy.dto.quesiton.PatchQuestionTitleDto;
+import com.moeasy.moeasy.dto.quesiton.PatchQuestionTitleResponseDto;
 import com.moeasy.moeasy.dto.quesiton.QuestionListDto;
 import com.moeasy.moeasy.dto.quesiton.QuestionsDto;
 import com.moeasy.moeasy.dto.quesiton.QuestionsRequestDto;
@@ -35,6 +37,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -158,7 +161,7 @@ public class QuestionController {
       description = "accesstoken 을 header 에 담아 전달해주면 해당 유저의 설문지 리스트를 반환합니다.",
       security = {})
   @ApiResponses(value = {
-      @ApiResponse(responseCode = "200", description = "섫문지 조회",
+      @ApiResponse(responseCode = "200", description = "설문지 조회",
           content = @Content(
               schema = @Schema(implementation = SuccessApiResponseDto.class),
               examples = @ExampleObject(value = SwaggerExamples.QUESTION_LIST_SUCCESS))),
@@ -183,5 +186,33 @@ public class QuestionController {
             .map(q -> QuestionListDto.from(
                 q, awsService.generatePresignedUrl(q.getId() + "/qr_code.png", "qr_code"))
             ).toList());
+  }
+
+  @Operation(summary = "설문지 제목 수정",
+      description = "accesstoken 을 header, questionId, title 을 담아주면, update 후 반홥합니다.",
+      security = @SecurityRequirement(name = "jwtAuth"))
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "설문지 조회",
+          content = @Content(
+              schema = @Schema(implementation = SuccessApiResponseDto.class),
+              examples = @ExampleObject(value = SwaggerExamples.QUESTION_UPDATE_TITLE))),
+      @ApiResponse(responseCode = "401", description = "유효하지 않은 토큰",
+          content = @Content(
+              schema = @Schema(implementation = FailApiResponseDto.class),
+              examples = @ExampleObject(value = SwaggerExamples.INVALID_ACCESS_TOKEN_EXAMPLE))),
+      @ApiResponse(responseCode = "500", description = "서버 에러 발생 (설문지 조회 안됨)",
+          content = @Content(
+              schema = @Schema(implementation = ErrorApiResponseDto.class),
+              examples = @ExampleObject(value = SwaggerExamples.INTERNAL_SERVER_ERROR_EXAMPLE)))
+  })
+  @PatchMapping
+  public SuccessApiResponseDto<PatchQuestionTitleResponseDto> patchQuestion(
+      @AuthenticationPrincipal CustomUserDetails user,
+      @RequestBody PatchQuestionTitleDto patchQuestionDto) {
+    return SuccessApiResponseDto.success(
+        200,
+        "success update title",
+        saveQuestionService.updateQuestionTitle(patchQuestionDto)
+    );
   }
 }
