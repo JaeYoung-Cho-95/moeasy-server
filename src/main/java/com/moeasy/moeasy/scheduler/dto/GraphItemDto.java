@@ -1,14 +1,18 @@
 package com.moeasy.moeasy.scheduler.dto;
 
-import lombok.*;
-
 import java.util.Map;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
 @Builder
 @AllArgsConstructor
 public class GraphItemDto {
-    private String type;
-    private Map<String, Integer> contents;
+
+  private String title;
+  private String type;
+  private Map<String, Integer> contents;
 }
