@@ -189,7 +189,7 @@ public class QuestionController {
   }
 
   @Operation(summary = "설문지 제목 수정",
-      description = "accesstoken 을 header, questionId, title 을 담아주면, update 후 반홥합니다.",
+      description = "accesstoken 을 header /  questionId, title 을 request body 에 담아주면 update 후 반홥합니다.",
       security = @SecurityRequirement(name = "jwtAuth"))
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "설문지 조회",
