@@ -89,7 +89,6 @@ public class SaveSurveyService {
         log.warn("Survey(id={})에 연결된 Question이 없습니다.", survey.getId());
       } else {
         question.increaseCount();
-        // 트랜잭션 내 더티체킹으로도 반영되지만 명시적으로 저장합니다.
         questionRepository.save(question);
       }
     } catch (IOException e) {
@@ -102,9 +101,9 @@ public class SaveSurveyService {
   private Map<String, QuestionAnswerDto> findByQuestion(
       List<Map<String, QuestionAnswerDto>> aggregates, String question) {
     for (Map<String, QuestionAnswerDto> m : aggregates) {
-        if (m.containsKey(question)) {
-            return m;
-        }
+      if (m.containsKey(question)) {
+        return m;
+      }
     }
     return null;
   }

@@ -96,6 +96,8 @@ public class SwaggerExamples {
           "title": "샘플 데이터 입니다."
           "multipleChoiceQuestions": [
             {
+              "id": 0,
+              "fixFlag": true,
               "question": "다음 중 HTTP 메서드가 아닌 것은?",
               "choices": [
                 "GET",
@@ -107,6 +109,8 @@ public class SwaggerExamples {
           ],
           "shortAnswerQuestions": [
             {
+              "id": 1,
+              "fixFlag": true,
               "question": "OSI 7계층에 대해 설명하시오.",
               "keywords": [
                 "물리 계층",
