@@ -10,99 +10,110 @@ import com.moeasy.moeasy.dto.survey.SurveySaveRequestDto;
 import com.moeasy.moeasy.repository.question.QuestionRepository;
 import com.moeasy.moeasy.repository.survey.SurveyRepository;
 import jakarta.persistence.EntityNotFoundException;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class SaveSurveyService {
-    private final SurveyRepository surveyRepository;
-    private final QuestionRepository questionRepository;
-    private final ObjectMapper objectMapper;
 
-    public Long updateSurvey(SurveySaveRequestDto surveySaveRequestDto) {
-        Survey survey = surveyRepository.findByQuestionId(surveySaveRequestDto.getQuestionId())
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Id : " + surveySaveRequestDto.getQuestionId()  + "를 통해 조회되는 survey 가 없습니다."));
+  private final SurveyRepository surveyRepository;
+  private final QuestionRepository questionRepository;
+  private final ObjectMapper objectMapper;
 
-        String resultsJson = survey.getResultsJson();
+  public Long updateSurvey(SurveySaveRequestDto surveySaveRequestDto) {
+    Survey survey = surveyRepository.findByQuestionId(surveySaveRequestDto.getQuestionId())
+        .orElseThrow(() -> new EntityNotFoundException(
+            "Id : " + surveySaveRequestDto.getQuestionId() + "를 통해 조회되는 survey 가 없습니다."));
 
-        try {
-            TypeReference<List<Map<String, QuestionAnswerDto>>> typeRef =
-                    new TypeReference<>() {};
-            List<Map<String, QuestionAnswerDto>> aggregates =
-                    objectMapper.readValue(resultsJson, typeRef);
+    String resultsJson = survey.getResultsJson();
 
-            for (Map<String, String> answerMap : surveySaveRequestDto.getResults()) {
-                for (Map.Entry<String, String> e : answerMap.entrySet()) {
-                    String question = e.getKey();
-                    String answer = e.getValue();
+    try {
+      TypeReference<List<Map<String, QuestionAnswerDto>>> typeRef =
+          new TypeReference<>() {
+          };
+      List<Map<String, QuestionAnswerDto>> aggregates =
+          objectMapper.readValue(resultsJson, typeRef);
 
-                    Map<String, QuestionAnswerDto> perQuestion = findByQuestion(aggregates, question);
-                    if (perQuestion == null) {
-                        log.warn("집계 템플릿에서 질문을 찾지 못했습니다. question={}", question);
-                        continue;
-                    }
+      for (Map<String, String> answerMap : surveySaveRequestDto.getResults()) {
+        for (Map.Entry<String, String> e : answerMap.entrySet()) {
+          String question = e.getKey();
+          String answer = e.getValue();
 
-                    QuestionAnswerDto qa = perQuestion.get(question);
-                    Map<String, Object> counts = qa.getMultipleAnswers();
-                    if (counts == null) {
-                        counts = new LinkedHashMap<>();
-                        counts.put("others", new ArrayList<>());
-                        qa.setMultipleAnswers(counts);
-                    }
+          Map<String, QuestionAnswerDto> perQuestion = findByQuestion(aggregates, question);
+          if (perQuestion == null) {
+            log.warn("집계 템플릿에서 질문을 찾지 못했습니다. question={}", question);
+            continue;
+          }
 
-                    if (counts.containsKey(answer) && counts.get(answer) instanceof Number) {
-                        Number n = (Number) counts.get(answer);
-                        counts.put(answer, n.intValue() + 1);
-                    } else {
-                        Object othersObj = counts.get("others");
-                        if (!(othersObj instanceof List)) {
-                            othersObj = new ArrayList<>();
-                            counts.put("others", othersObj);
-                        }
-                        @SuppressWarnings("unchecked")
-                        List<Object> others = (List<Object>) othersObj;
-                        others.add(answer);
-                    }
-                }
+          QuestionAnswerDto qa = perQuestion.get(question);
+          Map<String, Object> counts = qa.getMultipleAnswers();
+          if (counts == null) {
+            counts = new LinkedHashMap<>();
+            counts.put("others", new ArrayList<>());
+            qa.setMultipleAnswers(counts);
+          }
+
+          if (counts.containsKey(answer) && counts.get(answer) instanceof Number) {
+            Number n = (Number) counts.get(answer);
+            counts.put(answer, n.intValue() + 1);
+          } else {
+            Object othersObj = counts.get("others");
+            if (!(othersObj instanceof List)) {
+              othersObj = new ArrayList<>();
+              counts.put("others", othersObj);
             }
-
-            String updatedJson = objectMapper.writeValueAsString(SurveySaveDto.from(aggregates));
-            survey.updateResultsJson(updatedJson);
-            survey.updateLastUpdated();
-            surveyRepository.save(survey);
-
-            Question question = survey.getQuestion();
-            if (question == null) {
-                log.warn("Survey(id={})에 연결된 Question이 없습니다.", survey.getId());
-            } else {
-                question.increaseCount();
-                // 트랜잭션 내 더티체킹으로도 반영되지만 명시적으로 저장합니다.
-                questionRepository.save(question);
-            }
-        } catch (IOException e) {
-            throw new RuntimeException("Survey results JSON 처리 중 오류가 발생했습니다.", e);
+            @SuppressWarnings("unchecked")
+            List<Object> others = (List<Object>) othersObj;
+            others.add(answer);
+          }
         }
+      }
 
-        return survey.getId();
+      String updatedJson = objectMapper.writeValueAsString(SurveySaveDto.from(aggregates));
+      survey.updateResultsJson(updatedJson);
+      survey.updateLastUpdated();
+      surveyRepository.save(survey);
+
+      Question question = survey.getQuestion();
+      if (question == null) {
+        log.warn("Survey(id={})에 연결된 Question이 없습니다.", survey.getId());
+      } else {
+        question.increaseCount();
+        // 트랜잭션 내 더티체킹으로도 반영되지만 명시적으로 저장합니다.
+        questionRepository.save(question);
+      }
+    } catch (IOException e) {
+      throw new RuntimeException("Survey results JSON 처리 중 오류가 발생했습니다.", e);
     }
 
-    private Map<String, QuestionAnswerDto> findByQuestion(
-            List<Map<String, QuestionAnswerDto>> aggregates, String question) {
-        for (Map<String, QuestionAnswerDto> m : aggregates) {
-            if (m.containsKey(question)) return m;
+    return survey.getId();
+  }
+
+  private Map<String, QuestionAnswerDto> findByQuestion(
+      List<Map<String, QuestionAnswerDto>> aggregates, String question) {
+    for (Map<String, QuestionAnswerDto> m : aggregates) {
+        if (m.containsKey(question)) {
+            return m;
         }
-        return null;
     }
+    return null;
+  }
+
+  public Map<String, String> update(SurveySaveRequestDto surveySaveRequestDto) {
+    Map<String, String> surveyData = new HashMap<>();
+    String surveyId = String.valueOf(updateSurvey(surveySaveRequestDto));
+    surveyData.put("surveyId", surveyId);
+    surveyData.put("surveyUrl", "https://mo-easy.com/reporting/" + surveyId);
+    return surveyData;
+  }
 }
