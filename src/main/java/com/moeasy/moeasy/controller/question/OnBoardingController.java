@@ -1,7 +1,7 @@
 package com.moeasy.moeasy.controller.question;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.moeasy.moeasy.dto.onboarding.OnBoardingQuestionsResponseDto;
+import com.moeasy.moeasy.dto.onboarding.OnboardingQuestionDto;
 import com.moeasy.moeasy.dto.quesiton.OnboardingMakeQuestionRequestDto;
 import com.moeasy.moeasy.dto.quesiton.OnboardingRequestDto;
 import com.moeasy.moeasy.dto.quesiton.QuestionResponseDto;
@@ -21,6 +21,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -65,7 +66,7 @@ public class OnBoardingController {
               examples = @ExampleObject(value = SwaggerExamples.INTERNAL_SERVER_ERROR_EXAMPLE)))
   })
   @PostMapping("/onBoarding")
-  public SuccessApiResponseDto<OnBoardingQuestionsResponseDto> makeOnboardingQuestions(
+  public SuccessApiResponseDto<List<OnboardingQuestionDto>> makeOnboardingQuestions(
       @AuthenticationPrincipal CustomUserDetails user,
       @RequestBody OnboardingRequestDto onboardingRequestDto) throws JsonProcessingException {
     return SuccessApiResponseDto.success(

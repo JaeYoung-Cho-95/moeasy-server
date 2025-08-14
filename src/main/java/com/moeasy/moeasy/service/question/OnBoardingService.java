@@ -4,10 +4,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.moeasy.moeasy.dto.onboarding.InfoResponseDto;
-import com.moeasy.moeasy.dto.onboarding.OnBoardingQuestionsResponseDto;
+import com.moeasy.moeasy.dto.onboarding.OnboardingQuestionDto;
 import com.moeasy.moeasy.dto.onboarding.OnboardingQuestionsRequestDto;
 import com.moeasy.moeasy.dto.quesiton.OnboardingRequestDto;
 import com.moeasy.moeasy.service.llm.NaverCloudStudioService;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ResourceLoader;
@@ -31,7 +32,7 @@ public class OnBoardingService extends NaverCloudStudioService {
   /**
    * onboarding 1~3단계 사용자 입력값을 통해 4~6단계 질문을 llm 을 통해 생성
    */
-  public OnBoardingQuestionsResponseDto makeOnBoardingQuestions(
+  public List<OnboardingQuestionDto> makeOnBoardingQuestions(
       OnboardingRequestDto onboardingRequestDto)
       throws JsonProcessingException {
     InfoResponseDto infoResponseDto = requestInfo(onboardingRequestDto);
@@ -63,14 +64,12 @@ public class OnBoardingService extends NaverCloudStudioService {
   /**
    * 1~3단계 사용자 입력값 + 추가적으로 필요한 정보들을 합친 dto 로 4~6단계 정보를 llm 에 요청
    */
-  private OnBoardingQuestionsResponseDto requestOnboardingQuestions(
+  private List<OnboardingQuestionDto> requestOnboardingQuestions(
       OnboardingQuestionsRequestDto requestOnboardingQuestionsDto)
       throws JsonProcessingException {
     String systemPrompt = getPromptWithFilePath("prompts/onboardingMakeInfoQuestions.txt");
     String userPrompt = objectMapper.writeValueAsString(requestOnboardingQuestionsDto);
-    return OnBoardingQuestionsResponseDto.from(chatHcx007(systemPrompt, userPrompt,
-        new TypeReference<>() {
-        })
-    );
+    return chatHcx007(systemPrompt, userPrompt, new TypeReference<>() {
+    });
   }
 }
