@@ -35,19 +35,26 @@ import org.springframework.stereotype.Service;
 public class OnBoardingService extends NaverCloudStudioService {
 
   private final ObjectMapper objectMapper;
+
   private final MilvusServiceClient milvusServiceClient;
 
   public OnBoardingService(ResourceLoader resourceLoader,
       @Value("${naver.cloud.studio.host}") String host,
       @Value("${naver.cloud.studio.auth-token}") String authToken,
+      @Value("${milvus.host}") String milvusHost,
+      @Value("${milvus.port}") int milvusPort,
+      @Value("${milvus.token}") String milvusToken,     // 예: "root:Milvus"
+      @Value("${milvus.secure:false}") boolean secure,
+      @Value("${milvus.connect-timeout-ms:10000}") long timeoutMs,
       ObjectMapper objectMapper
   ) {
     super(resourceLoader, host, authToken, objectMapper);
     this.objectMapper = objectMapper;
     this.milvusServiceClient = new MilvusServiceClient(
         ConnectParam.newBuilder()
-            .withHost("127.0.0.1")
-            .withPort(19530)
+            .withHost(milvusHost)
+            .withPort(milvusPort)
+            .withToken(milvusToken)
             .build()
     );
   }
