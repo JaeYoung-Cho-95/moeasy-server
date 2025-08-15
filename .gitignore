@@ -41,6 +41,7 @@ src/main/resources/application.yml
 
 ## Loacl DB
 mysql-data
+milvus
 
 ### etc
 .DS_Store
@@ -55,3 +56,6 @@ copy_jar_to_server.sh
 /src/main/resources/prompts/**.txt
 /src/main/resources/prompts/makeKeywordsUsingSurvey.txt
 /src/main/resources/prompts/
+/src/main/resources/onbarding/.venv/
+/src/main/resources/onbarding/**.ndjson
+/src/main/resources/onbarding/**.json

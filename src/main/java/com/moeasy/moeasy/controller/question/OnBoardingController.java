@@ -72,7 +72,8 @@ public class OnBoardingController {
     return SuccessApiResponseDto.success(
         200,
         "success",
-        onBoardingService.makeOnBoardingQuestions(onboardingRequestDto)
+        onBoardingService.makeOnBoardingQuestions(
+            onboardingRequestDto)
     );
   }
 

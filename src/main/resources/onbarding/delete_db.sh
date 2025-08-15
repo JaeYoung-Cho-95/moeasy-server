@@ -1,0 +1,1 @@
+python delete_vector_db.py --collection survey --drop-collection
