@@ -114,12 +114,12 @@ public class MakeQuestionService extends NaverCloudStudioService {
   private boolean isJsonRelated(Throwable t) {
     while (t != null) {
       String msg = t.getMessage() == null ? "" : t.getMessage().toLowerCase();
-        if (t instanceof JsonProcessingException) {
-            return true;
-        }
-        if (msg.contains("json") || msg.contains("파싱")) {
-            return true;
-        }
+      if (t instanceof JsonProcessingException) {
+        return true;
+      }
+      if (msg.contains("json") || msg.contains("파싱")) {
+        return true;
+      }
       t = t.getCause();
     }
     return false;
@@ -129,7 +129,7 @@ public class MakeQuestionService extends NaverCloudStudioService {
       OnboardingMakeQuestionRequestDto onboardingMakeQuestionRequestDto) {
     String systemPrompt = getPromptWithFilePath("prompts/makeMultipleChoicesQuestionsPrompt.txt");
     String userPrompt = extractUserPrompt(onboardingMakeQuestionRequestDto);
-    return chat(systemPrompt, userPrompt, new TypeReference<List<MultipleChoiceQuestionDto>>() {
+    return chatHcx007(systemPrompt, userPrompt, new TypeReference<>() {
     });
   }
 
