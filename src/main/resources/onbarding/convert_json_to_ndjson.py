@@ -76,22 +76,30 @@ def _normalize_question_value(val: Any) -> Optional[str]:
 
 
 def _dedupe_questions(questions: List[Any]) -> List[Any]:
-  """question 필드 기준으로 중복 제거(첫 등장만 유지)."""
-  seen: set[str] = set()
+  """카테고리+도메인+question 기준으로 중복 제거(첫 등장만 유지)."""
+  seen: Set[Tuple[str, str, str]] = set()
   result: List[Any] = []
+
+  def norm(x: Any) -> str:
+    s = _normalize_question_value(x)
+    return s if s is not None else ""
+
   for q in questions:
-    key: Optional[str] = None
     if isinstance(q, dict) and "question" in q:
-      key = _normalize_question_value(q.get("question"))
-    # 비-dict이나 question 없는 항목은 중복 제거 대상 아님
-    if key is None:
+      cat = _infer_category(q) or ""
+      dom = norm(q.get("domain"))
+      qtext = norm(q.get("question"))
+      key = (cat, dom, qtext)
+
+      if qtext and key in seen:
+        continue
+      if qtext:
+        seen.add(key)
       result.append(q)
-      continue
-    if key in seen:
-      # 중복 -> 스킵
-      continue
-    seen.add(key)
-    result.append(q)
+    else:
+      # dict가 아니거나 question이 없으면 그대로 통과
+      result.append(q)
+
   return result
 
 
@@ -211,11 +219,9 @@ def main(argv: List[str]) -> int:
         top_level=data if args.merge_top_level else None,
         merge_top_level=args.merge_top_level,
     )
-  finally:
-    if close_out:
-      out.close()
-
-  return 0
+  except BrokenPipeError:
+    # 파이프가 끊긴 경우 조용히 종료
+    return 0
 
 
 if __name__ == "__main__":

@@ -60,17 +60,13 @@ public class OnBoardingService extends NaverCloudStudioService {
   }
 
   public List<OnboardingQuestionDto> makeOnBoardingQuestions(
-      OnboardingRequestDto onboardingRequestDto)
+      OnboardingRequestDto inputDto)
       throws JsonProcessingException {
-    return requestOnboardingQuestions(
-        RequestOnboardingDto.from(
-            onboardingRequestDto,
-            searchTop3(
-                onboardingRequestDto,
-                extractEmbedding(onboardingRequestDto)
-            )
-        )
-    );
+    List<searchFromVectorDBDto> searchDto = searchTop3(inputDto, extractEmbedding(inputDto));
+
+    RequestOnboardingDto requestDto = RequestOnboardingDto.from(inputDto, searchDto);
+
+    return requestOnboardingQuestions(requestDto);
   }
 
   private List<Float> extractEmbedding(OnboardingRequestDto onboardingRequestDto) {

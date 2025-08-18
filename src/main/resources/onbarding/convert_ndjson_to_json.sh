@@ -1,0 +1,1 @@
+python convert_ndjson_to_json.py Convert_af_onBoarding_questions.ndjson temp.json
