@@ -2,6 +2,7 @@ package com.moeasy.moeasy.controller.account;
 
 import com.moeasy.moeasy.dto.account.*;
 import com.moeasy.moeasy.response.ErrorApiResponseDto;
+import com.moeasy.moeasy.service.account.AppleService;
 import com.moeasy.moeasy.service.account.CustomUserDetails;
 import com.moeasy.moeasy.service.account.MemberService;
 import com.moeasy.moeasy.service.aws.AwsService;
@@ -50,6 +51,7 @@ import java.util.Map;
 public class AccountController {
 
     private final KakaoService kakaoService;
+    private final AppleService appleService;
     private final JwtUtil jwtUtil;
     private final RefreshTokenRepository refreshTokenRepository;
     private final MemberService memberService;
@@ -139,6 +141,33 @@ public class AccountController {
                                 .refreshToken(refreshToken)
                                 .email(kakaoInfo.getEmail())
                                 .name(kakaoInfo.getNickname())
+                                .build()
+                        )
+                );
+    }
+
+    @PostMapping("/login/apple")
+    public ResponseEntity<SuccessApiResponseDto<AppLoginTokenDto>> appleLogin(@RequestBody AppleLoginDto dto) throws Exception {
+        // Apple 로그인은 사용자 정보를 처음으로 넘길때만 이름을 넘겨줌
+
+        // Apple 서버에서 검증 이후 email 반환
+        String email = appleService.verifyAuthorizationCode(dto);
+
+        if (email == null) {
+            throw new CustomFailException(HttpStatus.UNAUTHORIZED, "유효하지 않은 애플 토큰이거나 사용자 정보를 가져올 수 없습니다.");
+        }
+
+        List<String> tokens = getTokens(KaKaoDto.builder().email(email).build());
+        String accessToken = tokens.get(0);
+        String refreshToken = tokens.get(1);
+
+        return ResponseEntity.ok()
+                .body(
+                        SuccessApiResponseDto.success(200, "login success", AppLoginTokenDto.builder()
+                                .accessToken(accessToken)
+                                .refreshToken(refreshToken)
+                                .email(email)
+                                .name(dto.makeFullName())
                                 .build()
                         )
                 );
@@ -291,7 +320,6 @@ public class AccountController {
 
         return Arrays.asList(accessToken, refreshToken);
     }
-
 
     @Operation(
             summary = "유저 정보 조회",
