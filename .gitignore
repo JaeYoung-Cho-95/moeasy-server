@@ -59,3 +59,5 @@ copy_jar_to_server.sh
 /src/main/resources/onbarding/.venv/
 /src/main/resources/onbarding/**.ndjson
 /src/main/resources/onbarding/**.json
+/src/main/resources/onbarding/make_dataset/**.txt
+/src/main/resources/onbarding/tunning_llm/**.txt
