@@ -11,6 +11,7 @@
 - [프로젝트 소개](#intro)
 - [기술 스택](#tech-stack)
 - [시스템 아키텍처](#architecture)
+- [ERD](#erd)
 - [주요 기능](#features)
 - [빠른 시작](#getting-started)
 - [디렉터리 구조](#directory-structure)
@@ -47,6 +48,10 @@
 불편하시더라도 양해 부탁드리겠습니다.<br>
 scheduler 서버는 : https://github.com/JaeYoung-Cho-95/moeasy-scheduler 를 참조해주시면 감사하겠습니다.
 <br><br>
+
+<a id="erd"></a>
+## ERD 🔗
+<img width="1131" height="581" alt="스크린샷 2025-08-29 오후 1 38 56" src="https://github.com/user-attachments/assets/3d7bb11e-d5ac-48f1-bcc7-a13b9f3c695b" />
 
 <a id="features"></a>
 ## 주요 기능 ✨
