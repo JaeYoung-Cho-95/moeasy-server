@@ -1,0 +1,80 @@
+spring:
+  application:
+    name: moeasy
+    security:
+      url-signer:
+        algorithm:
+        secret-key:
+
+  # database
+  datasource:
+    url:
+    username:
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: true
+
+  jackson:
+    time-zone: Asia/Seoul
+
+# swagger
+springdoc:
+  swagger-ui:
+    path:
+    url:
+  api-docs:
+    path:
+
+# kakao login
+kakao:
+  client:
+    id:
+    secret:
+  redirect:
+    url:
+
+# aws settings
+cloud:
+  aws:
+    credentials:
+      access-key:
+      secret-key:
+    region:
+      static:
+    stack:
+      auto:
+    s3:
+      qr_bucket:
+      profile_bucket:
+
+# jwt key
+jwt:
+  secret-key:
+
+# google web search api (optional)
+google:
+  web-search:
+    secret-key:
+    engine-id:
+
+# naver cloud
+naver:
+  cloud:
+    studio:
+      host:
+      auth-token:
+
+# milvus (local : using docker)
+milvus:
+  host: localhost
+  port: 19530
+  database: default
+  token: "root:Milvus"
+  secure: false
+  connect-timeout-ms: 10000
