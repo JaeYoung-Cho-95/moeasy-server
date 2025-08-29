@@ -1,5 +1,6 @@
 # MoEasy Backend API Server 🚀
-"비사이드 X 네이버 클라우드" 에서 개최한 포텐데이에 참석해 개발한 'Moeasy(모이지)' 라는 웹서비스 의 Spring Boot 기반 API 서버입니다.
+2025년 8월 "비사이드 X 네이버 클라우드" 에서 개최한 해커톤 대회에 참석했습니다.
+'Moeasy(모이지)' 라는 서비스 의 Spring Boot 기반 API 서버입니다.
 
 - 대회 성적 : 2등
 - 성적 확인 : https://bside.notion.site/508-AI-23822020273581a5a612fe592e878a10
