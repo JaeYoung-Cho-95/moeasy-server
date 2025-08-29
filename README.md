@@ -31,7 +31,7 @@
 
 <a id="tech-stack"></a>
 ## 기술 스택 🛠️
-- Language/Build: Java 24, Gradle
+- Language/Build: Java 24, Gradle, python (튜닝 및 llm 데이터 확장 시 사용)
 - Framework: Spring Boot, Spring Web(WebMVC/WebFlux 필요 시), Spring Security, OAuth2 Client
 - Persistence: Spring Data JPA, QueryDSL
 - Cloud/Storage: AWS S3, AWS RDS MySQL
