@@ -4,7 +4,7 @@
 
 - 대회 성적 : 2등
 - 성적 확인 : https://bside.notion.site/508-AI-23822020273581a5a612fe592e878a10
-- 서비스 url : https://mo-easy.com/welcome
+- 서비스 url : https://mo-easy.com
 <br>
 
 ## 목차 📚
