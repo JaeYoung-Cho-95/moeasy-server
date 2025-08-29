@@ -52,6 +52,7 @@ scheduler 서버는 : https://github.com/JaeYoung-Cho-95/moeasy-scheduler 를 �
 <a id="erd"></a>
 ## ERD 🔗
 <img width="1131" height="581" alt="스크린샷 2025-08-29 오후 1 38 56" src="https://github.com/user-attachments/assets/3d7bb11e-d5ac-48f1-bcc7-a13b9f3c695b" />
+<br><br>
 
 <a id="features"></a>
 ## 주요 기능 ✨
