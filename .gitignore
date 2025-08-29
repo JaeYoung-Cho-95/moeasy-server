@@ -47,6 +47,7 @@ milvus
 .DS_Store
 ssh_connect.sh
 ssm_tunnel.sh
+milvus_connnect.sh
 copy_jar_to_server.sh
 
 
