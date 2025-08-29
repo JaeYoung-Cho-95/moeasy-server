@@ -1,1 +1,0 @@
-sudo ssh -i /Users/jaeyoung/.security/MoEasy_Key.pem ubuntu@13.125.116.193
