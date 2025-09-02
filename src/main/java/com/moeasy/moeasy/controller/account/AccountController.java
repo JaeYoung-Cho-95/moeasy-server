@@ -30,10 +30,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,7 +46,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.view.RedirectView;
-import org.springframework.web.util.UriComponentsBuilder;
 
 @Tag(name = "Account", description = "계정 관련 API")
 @RestController
@@ -65,38 +60,13 @@ public class AccountController {
   private final AwsService awsService;
 
   /**
-   * 웹 소셜 로그인 callback (웹은 따로 로그인 없음)
+   * 웹 - 카카오 로그인 callback (웹은 따로 로그인 없음)
    */
   @Hidden
   @GetMapping("/callback")
   public RedirectView callback(@RequestParam("code") String code, HttpServletResponse response)
       throws Exception {
-    KaKaoDto kakaoInfo = kakaoService.getKakaoInfo(code);
-    List<String> tokens = getTokens(kakaoInfo);
-    String accessToken = tokens.get(0), refresh_token = tokens.get(1);
-
-    ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", refresh_token)
-        .httpOnly(true)
-        .secure(true) // HTTPS 환경에서만 동작
-        .path("/")
-        .maxAge(Duration.ofDays(7))
-        .sameSite("Lax")
-        .build();
-
-    response.addHeader("Set-Cookie", refreshCookie.toString());
-
-    String encodedNickname = URLEncoder.encode(kakaoInfo.getNickname(), StandardCharsets.UTF_8);
-    String encodedEmail = URLEncoder.encode(kakaoInfo.getEmail(), StandardCharsets.UTF_8);
-
-    // 프론트엔드로 access token 전달
-    String redirectUrl = UriComponentsBuilder.fromUriString("https://mo-easy.com/auth/success")
-        .queryParam("token", accessToken)
-        .queryParam("email", encodedEmail)
-        .queryParam("name", encodedNickname)
-        .build(false)
-        .toUriString();
-
-    return new RedirectView(redirectUrl);
+    return new RedirectView(kakaoService.makeRedirectUrl(code, response));
   }
 
   /**
@@ -323,20 +293,6 @@ public class AccountController {
       throws Exception {
     memberService.deleteMember(user.getId());
     return ResponseEntity.noContent().build();
-  }
-
-  private List<String> getTokens(KaKaoDto kakaoInfo) {
-    final String accessToken = jwtUtil.generateAccessToken(kakaoInfo.getEmail());
-    final String refreshToken = jwtUtil.generateRefreshToken(kakaoInfo.getEmail());
-
-    // Refresh Token DB에 저장 또는 업데이트
-    refreshTokenRepository.findByUserEmail(kakaoInfo.getEmail())
-        .ifPresentOrElse(
-            token -> token.updateToken(refreshToken),
-            () -> refreshTokenRepository.save(new RefreshToken(kakaoInfo.getEmail(), refreshToken))
-        );
-
-    return Arrays.asList(accessToken, refreshToken);
   }
 
   @Operation(
