@@ -1,9 +1,8 @@
 package com.moeasy.moeasy.controller.account;
 
 import com.moeasy.moeasy.config.jwt.JwtUtil;
-import com.moeasy.moeasy.config.response.custom.CustomFailException;
+import com.moeasy.moeasy.config.response.custom.CustomErrorException;
 import com.moeasy.moeasy.config.response.responseDto.ErrorResponseDto;
-import com.moeasy.moeasy.config.response.responseDto.FailResponseDto;
 import com.moeasy.moeasy.config.response.responseDto.SuccessResponseDto;
 import com.moeasy.moeasy.config.swagger.SwaggerExamples;
 import com.moeasy.moeasy.domain.account.RefreshToken;
@@ -101,7 +100,7 @@ public class AccountController {
     KaKaoDto kakaoInfo = kakaoService.getUserInfoWithToken(kakaoAccessToken);
 
     if (kakaoInfo == null) {
-      throw new CustomFailException(HttpStatus.UNAUTHORIZED,
+      throw new CustomErrorException(HttpStatus.UNAUTHORIZED,
           "유효하지 않은 카카오 토큰이거나 사용자 정보를 가져올 수 없습니다.");
     }
 

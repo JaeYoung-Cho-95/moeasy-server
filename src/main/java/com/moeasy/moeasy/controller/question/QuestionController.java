@@ -2,7 +2,6 @@ package com.moeasy.moeasy.controller.question;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.moeasy.moeasy.config.response.responseDto.ErrorResponseDto;
-import com.moeasy.moeasy.config.response.responseDto.FailResponseDto;
 import com.moeasy.moeasy.config.response.responseDto.SuccessResponseDto;
 import com.moeasy.moeasy.config.swagger.SwaggerExamples;
 import com.moeasy.moeasy.domain.question.Question;

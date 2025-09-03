@@ -1,7 +1,6 @@
 package com.moeasy.moeasy.controller.survey;
 
 import com.moeasy.moeasy.config.response.responseDto.ErrorResponseDto;
-import com.moeasy.moeasy.config.response.responseDto.FailResponseDto;
 import com.moeasy.moeasy.config.response.responseDto.SuccessResponseDto;
 import com.moeasy.moeasy.config.swagger.SwaggerExamples;
 import com.moeasy.moeasy.dto.survey.SurveySaveRequestDto;

@@ -2,7 +2,6 @@ package com.moeasy.moeasy.config.jwt;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.moeasy.moeasy.config.response.responseDto.FailResponseDto;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.security.SignatureException;

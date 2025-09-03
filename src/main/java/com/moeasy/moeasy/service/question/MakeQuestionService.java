@@ -3,7 +3,7 @@ package com.moeasy.moeasy.service.question;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.moeasy.moeasy.config.response.custom.CustomFailException;
+import com.moeasy.moeasy.config.response.custom.CustomErrorException;
 import com.moeasy.moeasy.dto.quesiton.MultipleChoiceIncludeIdQuestionDto;
 import com.moeasy.moeasy.dto.quesiton.MultipleChoiceQuestionDto;
 import com.moeasy.moeasy.dto.quesiton.OnboardingMakeQuestionRequestDto;
@@ -102,7 +102,7 @@ public class MakeQuestionService extends NaverCloudStudioService {
 
     } catch (RuntimeException e) {
       if (isJsonRelated(e)) {
-        throw new CustomFailException(
+        throw new CustomErrorException(
             HttpStatus.BAD_REQUEST,
             "입력하신 정보가 부족하거나 형식이 올바르지 않습니다. 조금 더 정확히 작성해 주세요."
         );

@@ -1,9 +1,8 @@
 package com.moeasy.moeasy.controller.question;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.moeasy.moeasy.config.response.custom.CustomFailException;
+import com.moeasy.moeasy.config.response.custom.CustomErrorException;
 import com.moeasy.moeasy.config.response.responseDto.ErrorResponseDto;
-import com.moeasy.moeasy.config.response.responseDto.FailResponseDto;
 import com.moeasy.moeasy.config.response.responseDto.SuccessResponseDto;
 import com.moeasy.moeasy.config.swagger.SwaggerExamples;
 import com.moeasy.moeasy.dto.onboarding.OnboardingQuestionDto;
@@ -107,8 +106,8 @@ public class OnBoardingController {
         ));
   }
 
-  @ExceptionHandler(CustomFailException.class)
-  public ResponseEntity<FailResponseDto> handleMakeQuestionsBadRequest(CustomFailException e) {
+  @ExceptionHandler(CustomErrorException.class)
+  public ResponseEntity<FailResponseDto> handleMakeQuestionsBadRequest(CustomErrorException e) {
     return ResponseEntity
         .status(e.getHttpStatus())
         .body(FailResponseDto.fail(e.getCode(), e.getMessage()));

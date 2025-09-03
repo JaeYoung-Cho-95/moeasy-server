@@ -1,7 +1,6 @@
 package com.moeasy.moeasy.controller;
 
 import com.moeasy.moeasy.config.response.responseDto.ErrorResponseDto;
-import com.moeasy.moeasy.config.response.responseDto.FailResponseDto;
 import com.moeasy.moeasy.config.response.responseDto.SuccessResponseDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
