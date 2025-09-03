@@ -1,10 +1,10 @@
 package com.moeasy.moeasy.controller.survey;
 
+import com.moeasy.moeasy.config.response.responseDto.ErrorResponseDto;
+import com.moeasy.moeasy.config.response.responseDto.FailResponseDto;
+import com.moeasy.moeasy.config.response.responseDto.SuccessResponseDto;
+import com.moeasy.moeasy.config.swagger.SwaggerExamples;
 import com.moeasy.moeasy.dto.survey.SurveySaveRequestDto;
-import com.moeasy.moeasy.response.ErrorApiResponseDto;
-import com.moeasy.moeasy.response.FailApiResponseDto;
-import com.moeasy.moeasy.response.SuccessApiResponseDto;
-import com.moeasy.moeasy.response.swagger.SwaggerExamples;
 import com.moeasy.moeasy.service.survey.GetSurveyService;
 import com.moeasy.moeasy.service.survey.SaveSurveyService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -40,21 +40,21 @@ public class SurveyController {
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "집계 성공",
           content = @Content(
-              schema = @Schema(implementation = SuccessApiResponseDto.class),
+              schema = @Schema(implementation = SuccessResponseDto.class),
               examples = @ExampleObject(value = SwaggerExamples.SURVEY_RESULT_SUCCESS_EXAMPLE))),
       @ApiResponse(responseCode = "404", description = "설문 리소스 없음",
           content = @Content(
-              schema = @Schema(implementation = FailApiResponseDto.class),
+              schema = @Schema(implementation = FailResponseDto.class),
               examples = @ExampleObject(value = SwaggerExamples.SURVEY_NOT_FOUND_EXAMPLE))),
       @ApiResponse(responseCode = "500", description = "서버 에러(결과 JSON 파싱/직렬화 실패 등)",
           content = @Content(
-              schema = @Schema(implementation = ErrorApiResponseDto.class),
+              schema = @Schema(implementation = ErrorResponseDto.class),
               examples = @ExampleObject(value = SwaggerExamples.INTERNAL_SERVER_ERROR_EXAMPLE)))
   })
   @GetMapping("/survey")
-  public SuccessApiResponseDto saveSurvey(
+  public SuccessResponseDto saveSurvey(
       @Parameter(description = "조회할 설문 ID", example = "123") @RequestParam("surveyId") Long surveyId) {
-    return SuccessApiResponseDto.success(200, "성공적으로 결과지 조회를 완료했습니다.",
+    return SuccessResponseDto.success(200, "성공적으로 결과지 조회를 완료했습니다.",
         getSurveyService.getSurveyAsJson(surveyId));
   }
 
@@ -66,20 +66,20 @@ public class SurveyController {
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "집계 성공",
           content = @Content(
-              schema = @Schema(implementation = SuccessApiResponseDto.class),
+              schema = @Schema(implementation = SuccessResponseDto.class),
               examples = @ExampleObject(value = SwaggerExamples.SURVEY_SAVE_SUCCESS_EXAMPLE))),
       @ApiResponse(responseCode = "404", description = "설문 리소스 없음",
           content = @Content(
-              schema = @Schema(implementation = FailApiResponseDto.class),
+              schema = @Schema(implementation = FailResponseDto.class),
               examples = @ExampleObject(value = SwaggerExamples.SURVEY_NOT_FOUND_EXAMPLE))),
       @ApiResponse(responseCode = "500", description = "서버 에러(결과 JSON 파싱/직렬화 실패 등)",
           content = @Content(
-              schema = @Schema(implementation = ErrorApiResponseDto.class),
+              schema = @Schema(implementation = ErrorResponseDto.class),
               examples = @ExampleObject(value = SwaggerExamples.INTERNAL_SERVER_ERROR_EXAMPLE)))
   })
   @PostMapping("/survey")
-  public SuccessApiResponseDto saveSurvey(@RequestBody SurveySaveRequestDto surveySaveRequestDto) {
-    return SuccessApiResponseDto.success(200, "성공적으로 저장하였습니다.",
+  public SuccessResponseDto saveSurvey(@RequestBody SurveySaveRequestDto surveySaveRequestDto) {
+    return SuccessResponseDto.success(200, "성공적으로 저장하였습니다.",
         saveSurveyService.update(surveySaveRequestDto));
   }
 }

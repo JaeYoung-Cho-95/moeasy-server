@@ -1,4 +1,4 @@
-package com.moeasy.moeasy.response.swagger;
+package com.moeasy.moeasy.config.swagger;
 
 public class SwaggerExamples {
 

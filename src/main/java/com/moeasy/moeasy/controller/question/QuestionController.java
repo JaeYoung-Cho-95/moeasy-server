@@ -1,6 +1,10 @@
 package com.moeasy.moeasy.controller.question;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.moeasy.moeasy.config.response.responseDto.ErrorResponseDto;
+import com.moeasy.moeasy.config.response.responseDto.FailResponseDto;
+import com.moeasy.moeasy.config.response.responseDto.SuccessResponseDto;
+import com.moeasy.moeasy.config.swagger.SwaggerExamples;
 import com.moeasy.moeasy.domain.question.Question;
 import com.moeasy.moeasy.dto.quesiton.MultipleChoiceIncludeIdQuestionDto;
 import com.moeasy.moeasy.dto.quesiton.PatchQuestionTitleDto;
@@ -10,10 +14,6 @@ import com.moeasy.moeasy.dto.quesiton.QuestionsDto;
 import com.moeasy.moeasy.dto.quesiton.QuestionsRequestDto;
 import com.moeasy.moeasy.dto.quesiton.ShortAnswerIncludeIdQuestionDto;
 import com.moeasy.moeasy.dto.quesiton.VerifyQrCodeDto;
-import com.moeasy.moeasy.response.ErrorApiResponseDto;
-import com.moeasy.moeasy.response.FailApiResponseDto;
-import com.moeasy.moeasy.response.SuccessApiResponseDto;
-import com.moeasy.moeasy.response.swagger.SwaggerExamples;
 import com.moeasy.moeasy.service.account.CustomUserDetails;
 import com.moeasy.moeasy.service.aws.AwsService;
 import com.moeasy.moeasy.service.question.QrCodeService;
@@ -62,19 +62,19 @@ public class QuestionController {
   @ApiResponses(value = {
       @ApiResponse(responseCode = "201", description = "저장 및 QR코드 생성 성공",
           content = @Content(
-              schema = @Schema(implementation = SuccessApiResponseDto.class),
+              schema = @Schema(implementation = SuccessResponseDto.class),
               examples = @ExampleObject(value = SwaggerExamples.SAVE_QUESTION_SUCCESS_EXAMPLE))),
       @ApiResponse(responseCode = "401", description = "인증 실패",
           content = @Content(
-              schema = @Schema(implementation = FailApiResponseDto.class),
+              schema = @Schema(implementation = FailResponseDto.class),
               examples = @ExampleObject(value = SwaggerExamples.INVALID_ACCESS_TOKEN_EXAMPLE))),
       @ApiResponse(responseCode = "500", description = "서버 에러 발생 (QR코드 생성 실패 등)",
           content = @Content(
-              schema = @Schema(implementation = ErrorApiResponseDto.class),
+              schema = @Schema(implementation = ErrorResponseDto.class),
               examples = @ExampleObject(value = SwaggerExamples.INTERNAL_SERVER_ERROR_EXAMPLE)))
   })
   @PostMapping
-  public ResponseEntity<SuccessApiResponseDto> saveQuestions(
+  public ResponseEntity<SuccessResponseDto> saveQuestions(
       @AuthenticationPrincipal CustomUserDetails user,
       @RequestBody QuestionsRequestDto questionsRequestDto
   ) throws Exception {
@@ -84,7 +84,7 @@ public class QuestionController {
     Map<String, String> data = qrCodeService.getQrCodeS3Url(questionId);
 
     return ResponseEntity.ok()
-        .body(SuccessApiResponseDto.success(201, "success", data));
+        .body(SuccessResponseDto.success(201, "success", data));
   }
 
 
@@ -94,15 +94,15 @@ public class QuestionController {
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "QR코드 검증 및 설문지 조회 성공",
           content = @Content(
-              schema = @Schema(implementation = SuccessApiResponseDto.class),
+              schema = @Schema(implementation = SuccessResponseDto.class),
               examples = @ExampleObject(value = SwaggerExamples.MAKE_QUESTION_SUCCESS_EXAMPLE))),
       @ApiResponse(responseCode = "410", description = "만료되었거나 유효하지 않은 QR 코드",
           content = @Content(
-              schema = @Schema(implementation = FailApiResponseDto.class),
+              schema = @Schema(implementation = FailResponseDto.class),
               examples = @ExampleObject(value = SwaggerExamples.EXPIRED_QR_CODE_EXAMPLE))),
       @ApiResponse(responseCode = "500", description = "서버 에러 발생 (설문지 데이터 파싱 오류 등)",
           content = @Content(
-              schema = @Schema(implementation = ErrorApiResponseDto.class),
+              schema = @Schema(implementation = ErrorResponseDto.class),
               examples = @ExampleObject(value = SwaggerExamples.INTERNAL_SERVER_ERROR_EXAMPLE)))
   })
   @PostMapping("/verifyQrCode")
@@ -112,7 +112,7 @@ public class QuestionController {
       return ResponseEntity
           .status(HttpStatus.BAD_REQUEST)
           .body(
-              FailApiResponseDto.fail(
+              FailResponseDto.fail(
                   410,
                   "resource gone"
               )
@@ -130,7 +130,7 @@ public class QuestionController {
 
       return ResponseEntity.ok()
           .body(
-              SuccessApiResponseDto.success(
+              SuccessResponseDto.success(
                   200,
                   "success",
                   QuestionsRequestDto.builder()
@@ -142,7 +142,7 @@ public class QuestionController {
           );
     } catch (IOException e) {
       log.info(e.getMessage());
-      ErrorApiResponseDto.ErrorResponse errorResponse = ErrorApiResponseDto.ErrorResponse.builder()
+      ErrorResponseDto.ErrorResponse errorResponse = ErrorResponseDto.ErrorResponse.builder()
           .type("JsonProcessingException")
           .errorDetail(e.getMessage())
           .build();
@@ -150,7 +150,7 @@ public class QuestionController {
       return ResponseEntity
           .status(HttpStatus.INTERNAL_SERVER_ERROR)
           .body(
-              ErrorApiResponseDto.error(500, errorResponse)
+              ErrorResponseDto.error(500, errorResponse)
           );
 
     }
@@ -163,23 +163,23 @@ public class QuestionController {
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "설문지 조회",
           content = @Content(
-              schema = @Schema(implementation = SuccessApiResponseDto.class),
+              schema = @Schema(implementation = SuccessResponseDto.class),
               examples = @ExampleObject(value = SwaggerExamples.QUESTION_LIST_SUCCESS))),
       @ApiResponse(responseCode = "401", description = "유효하지 않은 토큰",
           content = @Content(
-              schema = @Schema(implementation = FailApiResponseDto.class),
+              schema = @Schema(implementation = FailResponseDto.class),
               examples = @ExampleObject(value = SwaggerExamples.INVALID_ACCESS_TOKEN_EXAMPLE))),
       @ApiResponse(responseCode = "500", description = "서버 에러 발생 (설문지 데이터 파싱 오류 등)",
           content = @Content(
-              schema = @Schema(implementation = ErrorApiResponseDto.class),
+              schema = @Schema(implementation = ErrorResponseDto.class),
               examples = @ExampleObject(value = SwaggerExamples.INTERNAL_SERVER_ERROR_EXAMPLE)))
   })
   @GetMapping
-  public SuccessApiResponseDto<List<QuestionListDto>> getQuestions(
+  public SuccessResponseDto<List<QuestionListDto>> getQuestions(
       @AuthenticationPrincipal CustomUserDetails user) {
     List<Question> questions = questionService.findAllByMemberAndRefresh(user.getId());
 
-    return SuccessApiResponseDto.success(
+    return SuccessResponseDto.success(
         200,
         "success",
         questions.stream()
@@ -194,22 +194,22 @@ public class QuestionController {
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "설문지 조회",
           content = @Content(
-              schema = @Schema(implementation = SuccessApiResponseDto.class),
+              schema = @Schema(implementation = SuccessResponseDto.class),
               examples = @ExampleObject(value = SwaggerExamples.QUESTION_UPDATE_TITLE))),
       @ApiResponse(responseCode = "401", description = "유효하지 않은 토큰",
           content = @Content(
-              schema = @Schema(implementation = FailApiResponseDto.class),
+              schema = @Schema(implementation = FailResponseDto.class),
               examples = @ExampleObject(value = SwaggerExamples.INVALID_ACCESS_TOKEN_EXAMPLE))),
       @ApiResponse(responseCode = "500", description = "서버 에러 발생 (설문지 조회 안됨)",
           content = @Content(
-              schema = @Schema(implementation = ErrorApiResponseDto.class),
+              schema = @Schema(implementation = ErrorResponseDto.class),
               examples = @ExampleObject(value = SwaggerExamples.INTERNAL_SERVER_ERROR_EXAMPLE)))
   })
   @PatchMapping
-  public SuccessApiResponseDto<PatchQuestionTitleResponseDto> patchQuestion(
+  public SuccessResponseDto<PatchQuestionTitleResponseDto> patchQuestion(
       @AuthenticationPrincipal CustomUserDetails user,
       @RequestBody PatchQuestionTitleDto patchQuestionDto) {
-    return SuccessApiResponseDto.success(
+    return SuccessResponseDto.success(
         200,
         "success update title",
         saveQuestionService.updateQuestionTitle(patchQuestionDto)

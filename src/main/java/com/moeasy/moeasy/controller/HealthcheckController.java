@@ -1,8 +1,8 @@
 package com.moeasy.moeasy.controller;
 
-import com.moeasy.moeasy.response.ErrorApiResponseDto;
-import com.moeasy.moeasy.response.FailApiResponseDto;
-import com.moeasy.moeasy.response.SuccessApiResponseDto;
+import com.moeasy.moeasy.config.response.responseDto.ErrorResponseDto;
+import com.moeasy.moeasy.config.response.responseDto.FailResponseDto;
+import com.moeasy.moeasy.config.response.responseDto.SuccessResponseDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,40 +11,40 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class HealthcheckController {
 
-    @GetMapping("/healthcheck")
-    public ResponseEntity<SuccessApiResponseDto<String>> healthCheck() {
-        return ResponseEntity.ok(
-                SuccessApiResponseDto.success(
-                        200,
-                        "The server is operating normally",
-                        "경우에 따라 Map || LIST 가 담길 예정"
-                )
+  @GetMapping("/healthcheck")
+  public ResponseEntity<SuccessResponseDto<String>> healthCheck() {
+    return ResponseEntity.ok(
+        SuccessResponseDto.success(
+            200,
+            "The server is operating normally",
+            "경우에 따라 Map || LIST 가 담길 예정"
+        )
+    );
+  }
+
+  @GetMapping("/fail")
+  public ResponseEntity<FailResponseDto> getErrorResponse() {
+    return ResponseEntity
+        .status(HttpStatus.BAD_REQUEST)
+        .body(
+            FailResponseDto.fail(
+                404,
+                "no resource"
+            )
         );
-    }
+  }
 
-    @GetMapping("/fail")
-    public ResponseEntity<FailApiResponseDto> getErrorResponse() {
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(
-                        FailApiResponseDto.fail(
-                                404,
-                                "no resource"
-                        )
-                );
-    }
+  @GetMapping("/error")
+  public ResponseEntity<ErrorResponseDto> getFailResponse() {
+    ErrorResponseDto.ErrorResponse errorResponse = ErrorResponseDto.ErrorResponse.builder()
+        .type("ValidationException")
+        .errorDetail("server error.")
+        .build();
 
-    @GetMapping("/error")
-    public ResponseEntity<ErrorApiResponseDto> getFailResponse() {
-        ErrorApiResponseDto.ErrorResponse errorResponse = ErrorApiResponseDto.ErrorResponse.builder()
-                .type("ValidationException")
-                .errorDetail("server error.")
-                .build();
-
-        return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(
-                        ErrorApiResponseDto.error(500, errorResponse)
-                );
-    }
+    return ResponseEntity
+        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .body(
+            ErrorResponseDto.error(500, errorResponse)
+        );
+  }
 }

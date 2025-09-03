@@ -1,8 +1,8 @@
 package com.moeasy.moeasy.service.jwt;
 
+import com.moeasy.moeasy.config.jwt.JwtUtil;
 import com.moeasy.moeasy.domain.account.RefreshToken;
 import com.moeasy.moeasy.dto.account.KaKaoDto;
-import com.moeasy.moeasy.jwt.JwtUtil;
 import com.moeasy.moeasy.repository.account.RefreshTokenRepository;
 import java.time.Duration;
 import java.util.Arrays;

@@ -1,5 +1,11 @@
 package com.moeasy.moeasy.controller.account;
 
+import com.moeasy.moeasy.config.jwt.JwtUtil;
+import com.moeasy.moeasy.config.response.custom.CustomFailException;
+import com.moeasy.moeasy.config.response.responseDto.ErrorResponseDto;
+import com.moeasy.moeasy.config.response.responseDto.FailResponseDto;
+import com.moeasy.moeasy.config.response.responseDto.SuccessResponseDto;
+import com.moeasy.moeasy.config.swagger.SwaggerExamples;
 import com.moeasy.moeasy.domain.account.RefreshToken;
 import com.moeasy.moeasy.dto.account.AppLoginTokenDto;
 import com.moeasy.moeasy.dto.account.KaKaoDto;
@@ -7,13 +13,7 @@ import com.moeasy.moeasy.dto.account.MobileKakasSdkTokenDto;
 import com.moeasy.moeasy.dto.account.ProfileDto;
 import com.moeasy.moeasy.dto.account.RefreshDto;
 import com.moeasy.moeasy.dto.account.TokenDto;
-import com.moeasy.moeasy.jwt.JwtUtil;
 import com.moeasy.moeasy.repository.account.RefreshTokenRepository;
-import com.moeasy.moeasy.response.ErrorApiResponseDto;
-import com.moeasy.moeasy.response.FailApiResponseDto;
-import com.moeasy.moeasy.response.SuccessApiResponseDto;
-import com.moeasy.moeasy.response.custom.CustomFailException;
-import com.moeasy.moeasy.response.swagger.SwaggerExamples;
 import com.moeasy.moeasy.service.account.CustomUserDetails;
 import com.moeasy.moeasy.service.account.KakaoService;
 import com.moeasy.moeasy.service.account.MemberService;
@@ -82,19 +82,19 @@ public class AccountController {
           responseCode = "401",
           description = "유효하지 않은 카카오 토큰이거나 사용자 정보를 가져올 수 없는 경우",
           content = @Content(
-              schema = @Schema(implementation = FailApiResponseDto.class),
+              schema = @Schema(implementation = FailResponseDto.class),
               examples = @ExampleObject(value = SwaggerExamples.INVALID_KAKAO_TOKEN_EXAMPLE)
           )),
       @ApiResponse(
           responseCode = "500",
           description = "서버 에러 발생",
           content = @Content(
-              schema = @Schema(implementation = ErrorApiResponseDto.class),
+              schema = @Schema(implementation = ErrorResponseDto.class),
               examples = @ExampleObject(value = SwaggerExamples.INTERNAL_SERVER_ERROR_EXAMPLE)
           ))
   })
   @PostMapping("/login")
-  public ResponseEntity<SuccessApiResponseDto<AppLoginTokenDto>> appLogin(
+  public ResponseEntity<SuccessResponseDto<AppLoginTokenDto>> appLogin(
       @RequestBody MobileKakasSdkTokenDto mobileKakasSdkTokenDto) throws Exception {
     String kakaoAccessToken = mobileKakasSdkTokenDto.getAccessToken();
 
@@ -110,7 +110,7 @@ public class AccountController {
 
     return ResponseEntity.ok()
         .body(
-            SuccessApiResponseDto.success(200, "login success", AppLoginTokenDto.builder()
+            SuccessResponseDto.success(200, "login success", AppLoginTokenDto.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .email(kakaoInfo.getEmail())
@@ -128,15 +128,15 @@ public class AccountController {
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "토큰 재발급 성공",
           content = @Content(
-              schema = @Schema(implementation = SuccessApiResponseDto.class),
+              schema = @Schema(implementation = SuccessResponseDto.class),
               examples = @ExampleObject(value = SwaggerExamples.REISSUE_SUCCESS_EXAMPLE))),
       @ApiResponse(responseCode = "401", description = "유효하지 않은 토큰",
           content = @Content(
-              schema = @Schema(implementation = FailApiResponseDto.class),
+              schema = @Schema(implementation = FailResponseDto.class),
               examples = @ExampleObject(value = SwaggerExamples.INVALID_REFRESH_TOKEN_EXAMPLE))),
       @ApiResponse(responseCode = "500", description = "서버 에러 발생",
           content = @Content(
-              schema = @Schema(implementation = ErrorApiResponseDto.class),
+              schema = @Schema(implementation = ErrorResponseDto.class),
               examples = @ExampleObject(value = SwaggerExamples.INTERNAL_SERVER_ERROR_EXAMPLE)))
   })
   @PostMapping("/refresh")
@@ -147,7 +147,7 @@ public class AccountController {
     String authorizationHeader = request.getHeader("Authorization");
     if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
       return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-          .body(FailApiResponseDto.fail(HttpStatus.BAD_REQUEST.value(),
+          .body(FailResponseDto.fail(HttpStatus.BAD_REQUEST.value(),
               "헤더에 유효한 Access Token이 없습니다."));
     }
     String accessToken = authorizationHeader.substring(7);
@@ -164,7 +164,7 @@ public class AccountController {
     } catch (Exception e) {
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
           .body(
-              FailApiResponseDto.fail(HttpStatus.UNAUTHORIZED.value(), "Access Token이 유효하지 않습니다."));
+              FailResponseDto.fail(HttpStatus.UNAUTHORIZED.value(), "Access Token이 유효하지 않습니다."));
     }
 
     // 3) Refresh Token: 쿠키 우선 -> 바디 보조
@@ -186,7 +186,7 @@ public class AccountController {
     }
     if (providedRefreshToken == null || providedRefreshToken.isEmpty()) {
       return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-          .body(FailApiResponseDto.fail(HttpStatus.BAD_REQUEST.value(),
+          .body(FailResponseDto.fail(HttpStatus.BAD_REQUEST.value(),
               "Refresh Token이 제공되지 않았습니다."));
     }
 
@@ -196,14 +196,14 @@ public class AccountController {
       tokenMap.put("access_token", accessToken);
       tokenMap.put("refresh_token", providedRefreshToken);
       return ResponseEntity.ok(
-          SuccessApiResponseDto.success(200, "Access Token이 아직 유효합니다.", tokenMap));
+          SuccessResponseDto.success(200, "Access Token이 아직 유효합니다.", tokenMap));
     }
 
     // 5) DB에서 Refresh Token 조회 및 일치/유효성 확인
     RefreshToken storedToken = refreshTokenRepository.findByUserEmail(userEmail).orElse(null);
     if (storedToken == null || !storedToken.getToken().equals(providedRefreshToken)) {
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-          .body(FailApiResponseDto.fail(HttpStatus.UNAUTHORIZED.value(),
+          .body(FailResponseDto.fail(HttpStatus.UNAUTHORIZED.value(),
               "Refresh Token 정보가 일치하지 않습니다."));
     }
 
@@ -212,7 +212,7 @@ public class AccountController {
     } catch (Exception e) {
       refreshTokenRepository.delete(storedToken); // 만료/유효하지 않은 토큰 정리
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-          .body(FailApiResponseDto.fail(HttpStatus.UNAUTHORIZED.value(),
+          .body(FailResponseDto.fail(HttpStatus.UNAUTHORIZED.value(),
               "Refresh Token이 만료되었습니다. 다시 로그인해주세요."));
     }
 
@@ -239,7 +239,7 @@ public class AccountController {
 
     return ResponseEntity.ok()
         .header("Set-Cookie", refreshCookie.toString())
-        .body(SuccessApiResponseDto.success(200, "토큰이 성공적으로 갱신되었습니다.", tokenDto));
+        .body(SuccessResponseDto.success(200, "토큰이 성공적으로 갱신되었습니다.", tokenDto));
   }
 
   @Operation(
@@ -250,15 +250,15 @@ public class AccountController {
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "로그아웃 성공",
           content = @Content(
-              schema = @Schema(implementation = SuccessApiResponseDto.class),
+              schema = @Schema(implementation = SuccessResponseDto.class),
               examples = @ExampleObject(value = SwaggerExamples.LOGOUT_SUCCESS_EXAMPLE))),
       @ApiResponse(responseCode = "401", description = "유효하지 않은 토큰",
           content = @Content(
-              schema = @Schema(implementation = FailApiResponseDto.class),
+              schema = @Schema(implementation = FailResponseDto.class),
               examples = @ExampleObject(value = SwaggerExamples.INVALID_ACCESS_TOKEN_EXAMPLE))),
       @ApiResponse(responseCode = "500", description = "서버 에러 발생",
           content = @Content(
-              schema = @Schema(implementation = ErrorApiResponseDto.class),
+              schema = @Schema(implementation = ErrorResponseDto.class),
               examples = @ExampleObject(value = SwaggerExamples.INTERNAL_SERVER_ERROR_EXAMPLE)))
   })
   @PostMapping("/logout")
@@ -279,7 +279,7 @@ public class AccountController {
 
     return ResponseEntity.ok()
         .header("Set-Cookie", deleteRefreshCookie.toString())
-        .body(SuccessApiResponseDto.success(200, "logout success", null));
+        .body(SuccessResponseDto.success(200, "logout success", null));
   }
 
   @Operation(summary = "회원 탈퇴", description = "인증된 사용자의 계정을 삭제합니다. (설문지, refresh token 모두 cascade 로 삭제됩니다)")
@@ -303,19 +303,19 @@ public class AccountController {
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "조회 성공",
           content = @Content(
-              schema = @Schema(implementation = SuccessApiResponseDto.class),
+              schema = @Schema(implementation = SuccessResponseDto.class),
               examples = @ExampleObject(value = SwaggerExamples.SUCCESS_LOGIN_EXAMPLE))),
       @ApiResponse(responseCode = "401", description = "유효하지 않은 토큰",
           content = @Content(
-              schema = @Schema(implementation = FailApiResponseDto.class),
+              schema = @Schema(implementation = FailResponseDto.class),
               examples = @ExampleObject(value = SwaggerExamples.INVALID_ACCESS_TOKEN_EXAMPLE))),
   })
   @GetMapping
-  public ResponseEntity<SuccessApiResponseDto<ProfileDto>> getProfileInfo(
+  public ResponseEntity<SuccessResponseDto<ProfileDto>> getProfileInfo(
       @AuthenticationPrincipal CustomUserDetails user) throws Exception {
     String presignedUrl = awsService.generatePresignedUrl(user.getProfileUrl(), "profile");
     return ResponseEntity.ok()
-        .body(SuccessApiResponseDto.success(
+        .body(SuccessResponseDto.success(
             200, "success", ProfileDto.builder()
                 .email(user.getEmail())
                 .name(user.getName())

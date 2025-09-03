@@ -1,15 +1,15 @@
 package com.moeasy.moeasy.controller.question;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.moeasy.moeasy.config.response.custom.CustomFailException;
+import com.moeasy.moeasy.config.response.responseDto.ErrorResponseDto;
+import com.moeasy.moeasy.config.response.responseDto.FailResponseDto;
+import com.moeasy.moeasy.config.response.responseDto.SuccessResponseDto;
+import com.moeasy.moeasy.config.swagger.SwaggerExamples;
 import com.moeasy.moeasy.dto.onboarding.OnboardingQuestionDto;
 import com.moeasy.moeasy.dto.quesiton.OnboardingMakeQuestionRequestDto;
 import com.moeasy.moeasy.dto.quesiton.OnboardingRequestDto;
 import com.moeasy.moeasy.dto.quesiton.QuestionResponseDto;
-import com.moeasy.moeasy.response.ErrorApiResponseDto;
-import com.moeasy.moeasy.response.FailApiResponseDto;
-import com.moeasy.moeasy.response.SuccessApiResponseDto;
-import com.moeasy.moeasy.response.custom.CustomFailException;
-import com.moeasy.moeasy.response.swagger.SwaggerExamples;
 import com.moeasy.moeasy.service.account.CustomUserDetails;
 import com.moeasy.moeasy.service.question.MakeQuestionService;
 import com.moeasy.moeasy.service.question.OnBoardingService;
@@ -50,26 +50,26 @@ public class OnBoardingController {
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "문제 생성 성공",
           content = @Content(
-              schema = @Schema(implementation = SuccessApiResponseDto.class),
+              schema = @Schema(implementation = SuccessResponseDto.class),
               examples = @ExampleObject(value = SwaggerExamples.OnBoarding_Questions))),
       @ApiResponse(responseCode = "400", description = "product type 일치 실패",
           content = @Content(
-              schema = @Schema(implementation = FailApiResponseDto.class),
+              schema = @Schema(implementation = FailResponseDto.class),
               examples = @ExampleObject(value = SwaggerExamples.ONBOARDING_BAD_REQUEST))),
       @ApiResponse(responseCode = "401", description = "인증 실패",
           content = @Content(
-              schema = @Schema(implementation = FailApiResponseDto.class),
+              schema = @Schema(implementation = FailResponseDto.class),
               examples = @ExampleObject(value = SwaggerExamples.INVALID_ACCESS_TOKEN_EXAMPLE))),
       @ApiResponse(responseCode = "500", description = "서버 에러 발생",
           content = @Content(
-              schema = @Schema(implementation = ErrorApiResponseDto.class),
+              schema = @Schema(implementation = ErrorResponseDto.class),
               examples = @ExampleObject(value = SwaggerExamples.INTERNAL_SERVER_ERROR_EXAMPLE)))
   })
   @PostMapping("/onBoarding")
-  public SuccessApiResponseDto<List<OnboardingQuestionDto>> makeOnboardingQuestions(
+  public SuccessResponseDto<List<OnboardingQuestionDto>> makeOnboardingQuestions(
       @AuthenticationPrincipal CustomUserDetails user,
       @RequestBody OnboardingRequestDto onboardingRequestDto) throws JsonProcessingException {
-    return SuccessApiResponseDto.success(
+    return SuccessResponseDto.success(
         200,
         "success",
         onBoardingService.makeOnBoardingQuestions(
@@ -85,32 +85,32 @@ public class OnBoardingController {
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "문제 생성 성공",
           content = @Content(
-              schema = @Schema(implementation = SuccessApiResponseDto.class),
+              schema = @Schema(implementation = SuccessResponseDto.class),
               examples = @ExampleObject(value = SwaggerExamples.MAKE_QUESTION_SUCCESS_EXAMPLE))),
       @ApiResponse(responseCode = "401", description = "인증 실패",
           content = @Content(
-              schema = @Schema(implementation = FailApiResponseDto.class),
+              schema = @Schema(implementation = FailResponseDto.class),
               examples = @ExampleObject(value = SwaggerExamples.INVALID_ACCESS_TOKEN_EXAMPLE))),
       @ApiResponse(responseCode = "500", description = "서버 에러 발생",
           content = @Content(
-              schema = @Schema(implementation = ErrorApiResponseDto.class),
+              schema = @Schema(implementation = ErrorResponseDto.class),
               examples = @ExampleObject(value = SwaggerExamples.INTERNAL_SERVER_ERROR_EXAMPLE)))
   })
   @PostMapping("/make")
-  public ResponseEntity<SuccessApiResponseDto<QuestionResponseDto>> makeQuestions(
+  public ResponseEntity<SuccessResponseDto<QuestionResponseDto>> makeQuestions(
       @AuthenticationPrincipal CustomUserDetails user,
       @RequestBody OnboardingMakeQuestionRequestDto onboardingMakeQuestionRequestDto) {
     return ResponseEntity.ok()
-        .body(SuccessApiResponseDto.success(
+        .body(SuccessResponseDto.success(
             200, "successfully generated the problems",
             makeQuestionService.makeQuestions(onboardingMakeQuestionRequestDto)
         ));
   }
 
   @ExceptionHandler(CustomFailException.class)
-  public ResponseEntity<FailApiResponseDto> handleMakeQuestionsBadRequest(CustomFailException e) {
+  public ResponseEntity<FailResponseDto> handleMakeQuestionsBadRequest(CustomFailException e) {
     return ResponseEntity
         .status(e.getHttpStatus())
-        .body(FailApiResponseDto.fail(e.getCode(), e.getMessage()));
+        .body(FailResponseDto.fail(e.getCode(), e.getMessage()));
   }
 }
