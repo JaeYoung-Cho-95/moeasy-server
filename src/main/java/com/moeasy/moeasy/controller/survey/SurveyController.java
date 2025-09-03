@@ -43,7 +43,7 @@ public class SurveyController {
               examples = @ExampleObject(value = SwaggerExamples.SURVEY_RESULT_SUCCESS_EXAMPLE))),
       @ApiResponse(responseCode = "404", description = "설문 리소스 없음",
           content = @Content(
-              schema = @Schema(implementation = FailResponseDto.class),
+              schema = @Schema(implementation = ErrorResponseDto.class),
               examples = @ExampleObject(value = SwaggerExamples.SURVEY_NOT_FOUND_EXAMPLE))),
       @ApiResponse(responseCode = "500", description = "서버 에러(결과 JSON 파싱/직렬화 실패 등)",
           content = @Content(
@@ -69,7 +69,7 @@ public class SurveyController {
               examples = @ExampleObject(value = SwaggerExamples.SURVEY_SAVE_SUCCESS_EXAMPLE))),
       @ApiResponse(responseCode = "404", description = "설문 리소스 없음",
           content = @Content(
-              schema = @Schema(implementation = FailResponseDto.class),
+              schema = @Schema(implementation = ErrorResponseDto.class),
               examples = @ExampleObject(value = SwaggerExamples.SURVEY_NOT_FOUND_EXAMPLE))),
       @ApiResponse(responseCode = "500", description = "서버 에러(결과 JSON 파싱/직렬화 실패 등)",
           content = @Content(

@@ -81,7 +81,7 @@ public class AccountController {
           responseCode = "401",
           description = "유효하지 않은 카카오 토큰이거나 사용자 정보를 가져올 수 없는 경우",
           content = @Content(
-              schema = @Schema(implementation = FailResponseDto.class),
+              schema = @Schema(implementation = ErrorResponseDto.class),
               examples = @ExampleObject(value = SwaggerExamples.INVALID_KAKAO_TOKEN_EXAMPLE)
           )),
       @ApiResponse(
@@ -131,7 +131,7 @@ public class AccountController {
               examples = @ExampleObject(value = SwaggerExamples.REISSUE_SUCCESS_EXAMPLE))),
       @ApiResponse(responseCode = "401", description = "유효하지 않은 토큰",
           content = @Content(
-              schema = @Schema(implementation = FailResponseDto.class),
+              schema = @Schema(implementation = ErrorResponseDto.class),
               examples = @ExampleObject(value = SwaggerExamples.INVALID_REFRESH_TOKEN_EXAMPLE))),
       @ApiResponse(responseCode = "500", description = "서버 에러 발생",
           content = @Content(
@@ -146,7 +146,7 @@ public class AccountController {
     String authorizationHeader = request.getHeader("Authorization");
     if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
       return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-          .body(FailResponseDto.fail(HttpStatus.BAD_REQUEST.value(),
+          .body(ErrorResponseDto.from(HttpStatus.BAD_REQUEST.value(),
               "헤더에 유효한 Access Token이 없습니다."));
     }
     String accessToken = authorizationHeader.substring(7);
@@ -163,7 +163,7 @@ public class AccountController {
     } catch (Exception e) {
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
           .body(
-              FailResponseDto.fail(HttpStatus.UNAUTHORIZED.value(), "Access Token이 유효하지 않습니다."));
+              ErrorResponseDto.from(HttpStatus.UNAUTHORIZED.value(), "Access Token이 유효하지 않습니다."));
     }
 
     // 3) Refresh Token: 쿠키 우선 -> 바디 보조
@@ -185,7 +185,7 @@ public class AccountController {
     }
     if (providedRefreshToken == null || providedRefreshToken.isEmpty()) {
       return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-          .body(FailResponseDto.fail(HttpStatus.BAD_REQUEST.value(),
+          .body(ErrorResponseDto.from(HttpStatus.BAD_REQUEST.value(),
               "Refresh Token이 제공되지 않았습니다."));
     }
 
@@ -202,7 +202,7 @@ public class AccountController {
     RefreshToken storedToken = refreshTokenRepository.findByUserEmail(userEmail).orElse(null);
     if (storedToken == null || !storedToken.getToken().equals(providedRefreshToken)) {
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-          .body(FailResponseDto.fail(HttpStatus.UNAUTHORIZED.value(),
+          .body(ErrorResponseDto.from(HttpStatus.UNAUTHORIZED.value(),
               "Refresh Token 정보가 일치하지 않습니다."));
     }
 
@@ -211,7 +211,7 @@ public class AccountController {
     } catch (Exception e) {
       refreshTokenRepository.delete(storedToken); // 만료/유효하지 않은 토큰 정리
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-          .body(FailResponseDto.fail(HttpStatus.UNAUTHORIZED.value(),
+          .body(ErrorResponseDto.from(HttpStatus.UNAUTHORIZED.value(),
               "Refresh Token이 만료되었습니다. 다시 로그인해주세요."));
     }
 
@@ -253,7 +253,7 @@ public class AccountController {
               examples = @ExampleObject(value = SwaggerExamples.LOGOUT_SUCCESS_EXAMPLE))),
       @ApiResponse(responseCode = "401", description = "유효하지 않은 토큰",
           content = @Content(
-              schema = @Schema(implementation = FailResponseDto.class),
+              schema = @Schema(implementation = ErrorResponseDto.class),
               examples = @ExampleObject(value = SwaggerExamples.INVALID_ACCESS_TOKEN_EXAMPLE))),
       @ApiResponse(responseCode = "500", description = "서버 에러 발생",
           content = @Content(
@@ -306,7 +306,7 @@ public class AccountController {
               examples = @ExampleObject(value = SwaggerExamples.SUCCESS_LOGIN_EXAMPLE))),
       @ApiResponse(responseCode = "401", description = "유효하지 않은 토큰",
           content = @Content(
-              schema = @Schema(implementation = FailResponseDto.class),
+              schema = @Schema(implementation = ErrorResponseDto.class),
               examples = @ExampleObject(value = SwaggerExamples.INVALID_ACCESS_TOKEN_EXAMPLE))),
   })
   @GetMapping

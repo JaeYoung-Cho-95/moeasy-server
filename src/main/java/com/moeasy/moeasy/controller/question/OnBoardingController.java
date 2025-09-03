@@ -1,7 +1,6 @@
 package com.moeasy.moeasy.controller.question;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.moeasy.moeasy.config.response.custom.CustomErrorException;
 import com.moeasy.moeasy.config.response.responseDto.ErrorResponseDto;
 import com.moeasy.moeasy.config.response.responseDto.SuccessResponseDto;
 import com.moeasy.moeasy.config.swagger.SwaggerExamples;
@@ -25,7 +24,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -53,11 +51,11 @@ public class OnBoardingController {
               examples = @ExampleObject(value = SwaggerExamples.OnBoarding_Questions))),
       @ApiResponse(responseCode = "400", description = "product type 일치 실패",
           content = @Content(
-              schema = @Schema(implementation = FailResponseDto.class),
+              schema = @Schema(implementation = ErrorResponseDto.class),
               examples = @ExampleObject(value = SwaggerExamples.ONBOARDING_BAD_REQUEST))),
       @ApiResponse(responseCode = "401", description = "인증 실패",
           content = @Content(
-              schema = @Schema(implementation = FailResponseDto.class),
+              schema = @Schema(implementation = ErrorResponseDto.class),
               examples = @ExampleObject(value = SwaggerExamples.INVALID_ACCESS_TOKEN_EXAMPLE))),
       @ApiResponse(responseCode = "500", description = "서버 에러 발생",
           content = @Content(
@@ -88,7 +86,7 @@ public class OnBoardingController {
               examples = @ExampleObject(value = SwaggerExamples.MAKE_QUESTION_SUCCESS_EXAMPLE))),
       @ApiResponse(responseCode = "401", description = "인증 실패",
           content = @Content(
-              schema = @Schema(implementation = FailResponseDto.class),
+              schema = @Schema(implementation = ErrorResponseDto.class),
               examples = @ExampleObject(value = SwaggerExamples.INVALID_ACCESS_TOKEN_EXAMPLE))),
       @ApiResponse(responseCode = "500", description = "서버 에러 발생",
           content = @Content(
@@ -104,12 +102,5 @@ public class OnBoardingController {
             200, "successfully generated the problems",
             makeQuestionService.makeQuestions(onboardingMakeQuestionRequestDto)
         ));
-  }
-
-  @ExceptionHandler(CustomErrorException.class)
-  public ResponseEntity<FailResponseDto> handleMakeQuestionsBadRequest(CustomErrorException e) {
-    return ResponseEntity
-        .status(e.getHttpStatus())
-        .body(FailResponseDto.fail(e.getCode(), e.getMessage()));
   }
 }

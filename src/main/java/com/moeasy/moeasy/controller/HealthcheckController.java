@@ -22,11 +22,11 @@ public class HealthcheckController {
   }
 
   @GetMapping("/fail")
-  public ResponseEntity<FailResponseDto> getErrorResponse() {
+  public ResponseEntity<ErrorResponseDto> from() {
     return ResponseEntity
         .status(HttpStatus.BAD_REQUEST)
         .body(
-            FailResponseDto.fail(
+            ErrorResponseDto.from(
                 404,
                 "no resource"
             )
@@ -35,15 +35,12 @@ public class HealthcheckController {
 
   @GetMapping("/error")
   public ResponseEntity<ErrorResponseDto> getFailResponse() {
-    ErrorResponseDto.ErrorResponse errorResponse = ErrorResponseDto.ErrorResponse.builder()
-        .type("ValidationException")
-        .errorDetail("server error.")
-        .build();
-
     return ResponseEntity
         .status(HttpStatus.INTERNAL_SERVER_ERROR)
         .body(
-            ErrorResponseDto.error(500, errorResponse)
+            ErrorResponseDto.from(
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                "server error.")
         );
   }
 }

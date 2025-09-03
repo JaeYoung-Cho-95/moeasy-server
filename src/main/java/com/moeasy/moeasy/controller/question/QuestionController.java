@@ -65,7 +65,7 @@ public class QuestionController {
               examples = @ExampleObject(value = SwaggerExamples.SAVE_QUESTION_SUCCESS_EXAMPLE))),
       @ApiResponse(responseCode = "401", description = "인증 실패",
           content = @Content(
-              schema = @Schema(implementation = FailResponseDto.class),
+              schema = @Schema(implementation = ErrorResponseDto.class),
               examples = @ExampleObject(value = SwaggerExamples.INVALID_ACCESS_TOKEN_EXAMPLE))),
       @ApiResponse(responseCode = "500", description = "서버 에러 발생 (QR코드 생성 실패 등)",
           content = @Content(
@@ -97,7 +97,7 @@ public class QuestionController {
               examples = @ExampleObject(value = SwaggerExamples.MAKE_QUESTION_SUCCESS_EXAMPLE))),
       @ApiResponse(responseCode = "410", description = "만료되었거나 유효하지 않은 QR 코드",
           content = @Content(
-              schema = @Schema(implementation = FailResponseDto.class),
+              schema = @Schema(implementation = ErrorResponseDto.class),
               examples = @ExampleObject(value = SwaggerExamples.EXPIRED_QR_CODE_EXAMPLE))),
       @ApiResponse(responseCode = "500", description = "서버 에러 발생 (설문지 데이터 파싱 오류 등)",
           content = @Content(
@@ -111,7 +111,7 @@ public class QuestionController {
       return ResponseEntity
           .status(HttpStatus.BAD_REQUEST)
           .body(
-              FailResponseDto.fail(
+              ErrorResponseDto.from(
                   410,
                   "resource gone"
               )
@@ -141,17 +141,12 @@ public class QuestionController {
           );
     } catch (IOException e) {
       log.info(e.getMessage());
-      ErrorResponseDto.ErrorResponse errorResponse = ErrorResponseDto.ErrorResponse.builder()
-          .type("JsonProcessingException")
-          .errorDetail(e.getMessage())
-          .build();
 
       return ResponseEntity
           .status(HttpStatus.INTERNAL_SERVER_ERROR)
           .body(
-              ErrorResponseDto.error(500, errorResponse)
+              ErrorResponseDto.from(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage())
           );
-
     }
   }
 
@@ -166,7 +161,7 @@ public class QuestionController {
               examples = @ExampleObject(value = SwaggerExamples.QUESTION_LIST_SUCCESS))),
       @ApiResponse(responseCode = "401", description = "유효하지 않은 토큰",
           content = @Content(
-              schema = @Schema(implementation = FailResponseDto.class),
+              schema = @Schema(implementation = ErrorResponseDto.class),
               examples = @ExampleObject(value = SwaggerExamples.INVALID_ACCESS_TOKEN_EXAMPLE))),
       @ApiResponse(responseCode = "500", description = "서버 에러 발생 (설문지 데이터 파싱 오류 등)",
           content = @Content(
@@ -197,7 +192,7 @@ public class QuestionController {
               examples = @ExampleObject(value = SwaggerExamples.QUESTION_UPDATE_TITLE))),
       @ApiResponse(responseCode = "401", description = "유효하지 않은 토큰",
           content = @Content(
-              schema = @Schema(implementation = FailResponseDto.class),
+              schema = @Schema(implementation = ErrorResponseDto.class),
               examples = @ExampleObject(value = SwaggerExamples.INVALID_ACCESS_TOKEN_EXAMPLE))),
       @ApiResponse(responseCode = "500", description = "서버 에러 발생 (설문지 조회 안됨)",
           content = @Content(
