@@ -15,8 +15,8 @@ public class CustomErrorException extends RuntimeException {
 
   public static CustomErrorException from(HttpStatus httpStatus, String message) {
     return CustomErrorException.builder()
-        .message(message)
         .code(httpStatus.value())
+        .message(message)
         .build();
   }
 }
