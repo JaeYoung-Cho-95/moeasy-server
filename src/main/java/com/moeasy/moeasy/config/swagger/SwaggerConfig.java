@@ -13,28 +13,31 @@ public class SwaggerConfig {
 
   @Bean
   public OpenAPI openAPI() {
-    Info info = new Info()
+    return new OpenAPI()
+        .info(getInfo())
+        .addSecurityItem(new SecurityRequirement().addList("jwtAuth"))
+        .components(getComponents());
+  }
+
+  /**
+   * 제목, 설명, 버전 등 API 정보
+   */
+  private Info getInfo() {
+    return new Info()
         .title("Moeasy API")
         .version("v1.0.0")
         .description("Moeasy API 문서");
+  }
 
-    // Security Scheme 이름
-    String jwtSchemeName = "jwtAuth";
-    // API 요청 헤더에 인증 정보 포함
-    SecurityRequirement securityRequirement = new SecurityRequirement().addList(jwtSchemeName);
-    // SecuritySchemes 등록
-    Components components = new Components()
-        .addSecuritySchemes(jwtSchemeName, new SecurityScheme()
-            .name(jwtSchemeName)
-            .type(SecurityScheme.Type.HTTP) // HTTP 방식
+  /**
+   * 재사용이 가능한 보안 스키마, 스키마 정의 등
+   */
+  private Components getComponents() {
+    return new Components()
+        .addSecuritySchemes("jwtAuth", new SecurityScheme()
+            .name("jwtAuth")
+            .type(SecurityScheme.Type.HTTP)
             .scheme("bearer")
-            .bearerFormat("JWT")); // 토큰 형식 지정
-
-    return new OpenAPI()
-        .info(info)
-        .addSecurityItem(securityRequirement)
-        .components(components);
-
-
+            .bearerFormat("JWT"));
   }
 }
