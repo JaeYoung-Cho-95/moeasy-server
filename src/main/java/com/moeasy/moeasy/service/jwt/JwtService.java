@@ -2,7 +2,7 @@ package com.moeasy.moeasy.service.jwt;
 
 import com.moeasy.moeasy.config.jwt.JwtUtil;
 import com.moeasy.moeasy.domain.account.RefreshToken;
-import com.moeasy.moeasy.dto.account.KaKaoDto;
+import com.moeasy.moeasy.dto.account.response.KakaoDto;
 import com.moeasy.moeasy.repository.account.RefreshTokenRepository;
 import java.time.Duration;
 import java.util.Arrays;
@@ -19,7 +19,7 @@ public class JwtService {
   /**
    * user email 을 기반으로 accessToken, refreshToken 을 생성 refreshToken db 에 email 과 매칭되게 저장
    */
-  public List<String> getTokens(KaKaoDto kakaoInfo) {
+  public List<String> getTokens(KakaoDto kakaoInfo) {
     final String accessToken = jwtUtil.generateAccessToken(kakaoInfo.getEmail());
     final String refreshToken = jwtUtil.generateRefreshToken(kakaoInfo.getEmail());
 
