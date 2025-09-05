@@ -1,17 +1,15 @@
 package com.moeasy.moeasy.controller.account;
 
 import com.moeasy.moeasy.config.jwt.JwtUtil;
-import com.moeasy.moeasy.config.response.custom.CustomErrorException;
 import com.moeasy.moeasy.config.response.responseDto.ErrorResponseDto;
 import com.moeasy.moeasy.config.response.responseDto.SuccessResponseDto;
 import com.moeasy.moeasy.config.swagger.SwaggerExamples;
 import com.moeasy.moeasy.domain.account.RefreshToken;
-import com.moeasy.moeasy.dto.account.AppLoginTokenDto;
-import com.moeasy.moeasy.dto.account.KaKaoDto;
 import com.moeasy.moeasy.dto.account.MobileKakasSdkTokenDto;
 import com.moeasy.moeasy.dto.account.ProfileDto;
 import com.moeasy.moeasy.dto.account.RefreshDto;
 import com.moeasy.moeasy.dto.account.TokenDto;
+import com.moeasy.moeasy.dto.account.response.AppLoginDataDto;
 import com.moeasy.moeasy.repository.account.RefreshTokenRepository;
 import com.moeasy.moeasy.service.account.CustomUserDetails;
 import com.moeasy.moeasy.service.account.KakaoService;
@@ -20,6 +18,7 @@ import com.moeasy.moeasy.service.aws.AwsService;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -30,7 +29,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -75,6 +73,8 @@ public class AccountController {
       summary = "모바일 앱 로그인",
       description = "카카오 SDK 액세스 토큰을 사용하여 로그인하고 JWT 토큰을 발급합니다."
   )
+  @Parameter(name = "accessToken", description = "카카오 oauth 측에서 전달받은 accessToken")
+  @Parameter(name = "refreshToken", description = "카카오 oauth 측에서 전달받은 refreshToken")
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "로그인 및 회원가입 성공(User 정보 없으면 회원가입 or 로그인)"),
       @ApiResponse(
@@ -93,30 +93,12 @@ public class AccountController {
           ))
   })
   @PostMapping("/login")
-  public ResponseEntity<SuccessResponseDto<AppLoginTokenDto>> appLogin(
-      @RequestBody MobileKakasSdkTokenDto mobileKakasSdkTokenDto) throws Exception {
-    String kakaoAccessToken = mobileKakasSdkTokenDto.getAccessToken();
-
-    KaKaoDto kakaoInfo = kakaoService.getUserInfoWithToken(kakaoAccessToken);
-
-    if (kakaoInfo == null) {
-      throw new CustomErrorException(HttpStatus.UNAUTHORIZED,
-          "유효하지 않은 카카오 토큰이거나 사용자 정보를 가져올 수 없습니다.");
-    }
-
-    List<String> tokens = getTokens(kakaoInfo);
-    String accessToken = tokens.get(0), refreshToken = tokens.get(1);
-
-    return ResponseEntity.ok()
-        .body(
-            SuccessResponseDto.success(200, "login success", AppLoginTokenDto.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .email(kakaoInfo.getEmail())
-                .name(kakaoInfo.getNickname())
-                .build()
-            )
-        );
+  public SuccessResponseDto<AppLoginDataDto> appLogin(
+      @RequestBody MobileKakasSdkTokenDto dto) {
+    return SuccessResponseDto.success(
+        200,
+        "login success",
+        kakaoService.getAppLoginDataDto(dto));
   }
 
   @Operation(
