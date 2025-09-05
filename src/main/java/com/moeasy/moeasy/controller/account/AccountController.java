@@ -18,7 +18,6 @@ import com.moeasy.moeasy.service.aws.AwsService;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -48,6 +47,16 @@ import org.springframework.web.servlet.view.RedirectView;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("account")
+@ApiResponses(value = {
+    @ApiResponse(responseCode = "401", description = "유효하지 않은 토큰",
+        content = @Content(
+            schema = @Schema(implementation = ErrorResponseDto.class),
+            examples = @ExampleObject(value = SwaggerExamples.INVALID_REFRESH_TOKEN_EXAMPLE))),
+    @ApiResponse(responseCode = "500", description = "서버 에러 발생",
+        content = @Content(
+            schema = @Schema(implementation = ErrorResponseDto.class),
+            examples = @ExampleObject(value = SwaggerExamples.INTERNAL_SERVER_ERROR_EXAMPLE)))
+})
 public class AccountController {
 
   private final KakaoService kakaoService;
@@ -71,34 +80,11 @@ public class AccountController {
    */
   @Operation(
       summary = "모바일 앱 로그인",
-      description = "카카오 SDK 액세스 토큰을 사용하여 로그인하고 JWT 토큰을 발급합니다."
-  )
-  @Parameter(name = "accessToken", description = "카카오 oauth 측에서 전달받은 accessToken")
-  @Parameter(name = "refreshToken", description = "카카오 oauth 측에서 전달받은 refreshToken")
-  @ApiResponses(value = {
-      @ApiResponse(responseCode = "200", description = "로그인 및 회원가입 성공(User 정보 없으면 회원가입 or 로그인)"),
-      @ApiResponse(
-          responseCode = "401",
-          description = "유효하지 않은 카카오 토큰이거나 사용자 정보를 가져올 수 없는 경우",
-          content = @Content(
-              schema = @Schema(implementation = ErrorResponseDto.class),
-              examples = @ExampleObject(value = SwaggerExamples.INVALID_KAKAO_TOKEN_EXAMPLE)
-          )),
-      @ApiResponse(
-          responseCode = "500",
-          description = "서버 에러 발생",
-          content = @Content(
-              schema = @Schema(implementation = ErrorResponseDto.class),
-              examples = @ExampleObject(value = SwaggerExamples.INTERNAL_SERVER_ERROR_EXAMPLE)
-          ))
-  })
+      description = "카카오 SDK 액세스 토큰을 사용하여 로그인하고 JWT 토큰을 발급합니다.")
   @PostMapping("/login")
-  public SuccessResponseDto<AppLoginDataDto> appLogin(
+  public AppLoginDataDto appLogin(
       @RequestBody MobileKakasSdkTokenDto dto) {
-    return SuccessResponseDto.success(
-        200,
-        "login success",
-        kakaoService.getAppLoginDataDto(dto));
+    return kakaoService.getAppLoginDataDto(dto);
   }
 
   @Operation(
@@ -106,20 +92,6 @@ public class AccountController {
       description = "accessToken과 RefreshToken을 넘겨줬을 때 만료된 경우 새롭게 생성 후 전달하고, 만료되지 않은 경우 그대로 돌려줍니다.",
       security = @SecurityRequirement(name = "jwtAuth")
   )
-  @ApiResponses(value = {
-      @ApiResponse(responseCode = "200", description = "토큰 재발급 성공",
-          content = @Content(
-              schema = @Schema(implementation = SuccessResponseDto.class),
-              examples = @ExampleObject(value = SwaggerExamples.REISSUE_SUCCESS_EXAMPLE))),
-      @ApiResponse(responseCode = "401", description = "유효하지 않은 토큰",
-          content = @Content(
-              schema = @Schema(implementation = ErrorResponseDto.class),
-              examples = @ExampleObject(value = SwaggerExamples.INVALID_REFRESH_TOKEN_EXAMPLE))),
-      @ApiResponse(responseCode = "500", description = "서버 에러 발생",
-          content = @Content(
-              schema = @Schema(implementation = ErrorResponseDto.class),
-              examples = @ExampleObject(value = SwaggerExamples.INTERNAL_SERVER_ERROR_EXAMPLE)))
-  })
   @PostMapping("/refresh")
   public ResponseEntity<?> reissue(HttpServletRequest request,
       @RequestBody(required = false) RefreshDto refreshTokenRequestDto) {
