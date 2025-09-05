@@ -2,6 +2,7 @@ package com.moeasy.moeasy.config.jwt;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.moeasy.moeasy.config.response.responseDto.ErrorResponseDto;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.security.SignatureException;
@@ -84,7 +85,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     response.setContentType(MediaType.APPLICATION_JSON_VALUE);
     response.setCharacterEncoding("UTF-8");
 
-    FailResponseDto failResponse = FailResponseDto.fail(status.value(), message);
+    ErrorResponseDto failResponse = ErrorResponseDto.from(status.value(), message);
     response.getWriter().write(objectMapper.writeValueAsString(failResponse));
   }
 }
