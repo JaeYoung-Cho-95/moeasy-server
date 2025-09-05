@@ -1,6 +1,7 @@
 package com.moeasy.moeasy.config.jwt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.moeasy.moeasy.config.response.responseDto.ErrorResponseDto;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -25,7 +26,7 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
     response.setContentType(MediaType.APPLICATION_JSON_VALUE);
     response.setCharacterEncoding("UTF-8");
 
-    FailResponseDto failResponse = FailResponseDto.fail(
+    ErrorResponseDto failResponse = ErrorResponseDto.from(
         HttpStatus.UNAUTHORIZED.value(),
         "Authentication failed. Please ensure that the request includes a valid authentication token."
     );
