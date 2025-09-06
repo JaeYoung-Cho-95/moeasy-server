@@ -1,8 +1,6 @@
 package com.moeasy.moeasy.config.jwt;
 
 import com.moeasy.moeasy.config.response.custom.CustomErrorException;
-import com.moeasy.moeasy.config.response.responseDto.ErrorResponseDto;
-import com.moeasy.moeasy.config.response.responseDto.SuccessResponseDto;
 import com.moeasy.moeasy.domain.account.RefreshToken;
 import com.moeasy.moeasy.dto.account.request.RefreshTokenForAppDto;
 import com.moeasy.moeasy.dto.account.response.RefreshTokensDto;
@@ -23,7 +21,6 @@ import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -125,8 +122,9 @@ public class JwtUtil {
       String refreshToken = dto.getRefreshToken();
       if (refreshToken != null && !refreshToken.isEmpty()) {
         return refreshToken;
-        } else {
-        throw CustomErrorException.from(HttpStatus.BAD_REQUEST, "refreshToken 이  Body 안에 존재하지 않습니다.")
+      } else {
+        throw CustomErrorException.from(HttpStatus.BAD_REQUEST,
+            "refreshToken 이  Body 안에 존재하지 않습니다.");
       }
     } else {
       return getRefreshTokenFromCookies(request);
@@ -146,7 +144,8 @@ public class JwtUtil {
 
   private String validateRefreshTokenFromCookies(String refreshToken) {
     if (refreshToken == null || refreshToken.isEmpty()) {
-      throw CustomErrorException.from(HttpStatus.UNAUTHORIZED, "Cookie 에서 refreshToken 이 조회되지 않았습니다.");
+      throw CustomErrorException.from(HttpStatus.UNAUTHORIZED,
+          "Cookie 에서 refreshToken 이 조회되지 않았습니다.");
     }
     return refreshToken;
   }
@@ -199,7 +198,8 @@ public class JwtUtil {
       return refreshToken;
     } catch (Exception e) {
       refreshTokenRepository.delete(refreshToken);
-      throw CustomErrorException.from(HttpStatus.UNAUTHORIZED, "Refresh Token이 만료되었습니다. 다시 로그인해주세요.");
+      throw CustomErrorException.from(HttpStatus.UNAUTHORIZED,
+          "Refresh Token이 만료되었습니다. 다시 로그인해주세요.");
     }
   }
 }
