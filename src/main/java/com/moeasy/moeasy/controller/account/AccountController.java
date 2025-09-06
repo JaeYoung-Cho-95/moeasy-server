@@ -4,18 +4,16 @@ import com.moeasy.moeasy.config.jwt.JwtUtil;
 import com.moeasy.moeasy.config.response.responseDto.ErrorResponseDto;
 import com.moeasy.moeasy.config.response.responseDto.SuccessResponseDto;
 import com.moeasy.moeasy.config.swagger.SwaggerExamples;
-import com.moeasy.moeasy.domain.account.RefreshToken;
 import com.moeasy.moeasy.dto.account.MobileKakasSdkTokenDto;
 import com.moeasy.moeasy.dto.account.ProfileDto;
-import com.moeasy.moeasy.dto.account.RefreshDto;
-import com.moeasy.moeasy.dto.account.TokenDto;
+import com.moeasy.moeasy.dto.account.request.RefreshTokenForAppDto;
 import com.moeasy.moeasy.dto.account.response.AppLoginDataDto;
+import com.moeasy.moeasy.dto.account.response.RefreshTokensDto;
 import com.moeasy.moeasy.repository.account.RefreshTokenRepository;
 import com.moeasy.moeasy.service.account.CustomUserDetails;
 import com.moeasy.moeasy.service.account.KakaoService;
 import com.moeasy.moeasy.service.account.MemberService;
 import com.moeasy.moeasy.service.aws.AwsService;
-import io.jsonwebtoken.ExpiredJwtException;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -27,10 +25,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.util.HashMap;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -87,112 +82,26 @@ public class AccountController {
     return kakaoService.getAppLoginDataDto(dto);
   }
 
+
+  /**
+   * refreshToken 이용한 token refreh api
+   */
   @Operation(
       summary = "토큰 리프레쉬",
       description = "accessToken과 RefreshToken을 넘겨줬을 때 만료된 경우 새롭게 생성 후 전달하고, 만료되지 않은 경우 그대로 돌려줍니다.",
       security = @SecurityRequirement(name = "jwtAuth")
   )
   @PostMapping("/refresh")
-  public ResponseEntity<?> reissue(HttpServletRequest request,
-      @RequestBody(required = false) RefreshDto refreshTokenRequestDto) {
-
-    // 1) 헤더에서 Access Token 추출
-    String authorizationHeader = request.getHeader("Authorization");
-    if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
-      return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-          .body(ErrorResponseDto.from(HttpStatus.BAD_REQUEST.value(),
-              "헤더에 유효한 Access Token이 없습니다."));
-    }
-    String accessToken = authorizationHeader.substring(7);
-
-    // 2) Access Token 유효성 검사
-    String userEmail;
-    boolean isAccessTokenExpired = false;
-    try {
-      userEmail = jwtUtil.extractEmail(accessToken);
-      jwtUtil.validateToken(accessToken, userEmail);
-    } catch (ExpiredJwtException e) {
-      isAccessTokenExpired = true;
-      userEmail = e.getClaims().getSubject();
-    } catch (Exception e) {
-      return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-          .body(
-              ErrorResponseDto.from(HttpStatus.UNAUTHORIZED.value(), "Access Token이 유효하지 않습니다."));
-    }
-
-    // 3) Refresh Token: 쿠키 우선 -> 바디 보조
-    String providedRefreshToken = null;
-    if (request.getCookies() != null) {
-      for (jakarta.servlet.http.Cookie c : request.getCookies()) {
-        if ("refresh_token".equals(c.getName())) {
-          providedRefreshToken = c.getValue();
-          break;
-        }
-      }
-    }
-    if ((providedRefreshToken == null || providedRefreshToken.isEmpty())
-        && refreshTokenRequestDto != null) {
-      String bodyToken = refreshTokenRequestDto.getRefreshToken();
-      if (bodyToken != null && !bodyToken.isEmpty()) {
-        providedRefreshToken = bodyToken;
-      }
-    }
-    if (providedRefreshToken == null || providedRefreshToken.isEmpty()) {
-      return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-          .body(ErrorResponseDto.from(HttpStatus.BAD_REQUEST.value(),
-              "Refresh Token이 제공되지 않았습니다."));
-    }
-
-    // 4) Access Token이 아직 유효하면 그대로 반환
-    if (!isAccessTokenExpired) {
-      Map<String, String> tokenMap = new HashMap<>();
-      tokenMap.put("access_token", accessToken);
-      tokenMap.put("refresh_token", providedRefreshToken);
-      return ResponseEntity.ok(
-          SuccessResponseDto.success(200, "Access Token이 아직 유효합니다.", tokenMap));
-    }
-
-    // 5) DB에서 Refresh Token 조회 및 일치/유효성 확인
-    RefreshToken storedToken = refreshTokenRepository.findByUserEmail(userEmail).orElse(null);
-    if (storedToken == null || !storedToken.getToken().equals(providedRefreshToken)) {
-      return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-          .body(ErrorResponseDto.from(HttpStatus.UNAUTHORIZED.value(),
-              "Refresh Token 정보가 일치하지 않습니다."));
-    }
-
-    try {
-      jwtUtil.validateToken(providedRefreshToken, userEmail);
-    } catch (Exception e) {
-      refreshTokenRepository.delete(storedToken); // 만료/유효하지 않은 토큰 정리
-      return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-          .body(ErrorResponseDto.from(HttpStatus.UNAUTHORIZED.value(),
-              "Refresh Token이 만료되었습니다. 다시 로그인해주세요."));
-    }
-
-    // 6) 새 토큰 발급 + DB 업데이트
-    String newAccessToken = jwtUtil.generateAccessToken(userEmail);
-    String newRefreshToken = jwtUtil.generateRefreshToken(userEmail);
-
-    storedToken.updateToken(newRefreshToken);
-    refreshTokenRepository.save(storedToken);
-
-    // 7) 웹용: HttpOnly 쿠키로 재설정, 앱용: Body에도 포함
-    ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", newRefreshToken)
-        .httpOnly(true)
-        .secure(true)
-        .path("/")
-        .maxAge(java.time.Duration.ofDays(7))
-        .sameSite("Lax")
-        .build();
-
-    TokenDto tokenDto = TokenDto.builder()
-        .accessToken(newAccessToken)
-        .refreshToken(newRefreshToken)
-        .build();
-
-    return ResponseEntity.ok()
-        .header("Set-Cookie", refreshCookie.toString())
-        .body(SuccessResponseDto.success(200, "토큰이 성공적으로 갱신되었습니다.", tokenDto));
+  public RefreshTokensDto refresh(
+      HttpServletRequest request,
+      HttpServletResponse response,
+      @RequestBody(required = false) RefreshTokenForAppDto refreshTokenRequestDto) {
+    RefreshTokensDto refreshToken = jwtUtil.getRefreshToken(
+        request,
+        refreshTokenRequestDto
+    );
+    setRefreshTokenInCookie(response, refreshToken);
+    return refreshToken;
   }
 
   @Operation(
@@ -275,5 +184,22 @@ public class AccountController {
                 .profileUrl(presignedUrl)
                 .build()
         ));
+  }
+
+
+  private static void setRefreshTokenInCookie(HttpServletResponse response,
+      RefreshTokensDto refreshToken) {
+    // 7) 웹용: HttpOnly 쿠키로 재설정, 앱용: Body에도 포함
+    ResponseCookie refreshCookie = ResponseCookie.from(
+            "refresh_token",
+            refreshToken.getRefreshToken())
+        .httpOnly(true)
+        .secure(true)
+        .path("/")
+        .maxAge(java.time.Duration.ofDays(7))
+        .sameSite("Lax")
+        .build();
+
+    response.addHeader("Set-Cookie", refreshCookie.toString());
   }
 }
