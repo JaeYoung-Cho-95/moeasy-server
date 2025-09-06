@@ -100,49 +100,29 @@ public class AccountController {
         request,
         refreshTokenRequestDto
     );
-    setRefreshTokenInCookie(response, refreshToken);
+    setRefreshTokenInCookie(response, refreshToken.getRefreshToken());
     return refreshToken;
   }
 
+
+  /**
+   * 로그아웃 api. refreshToken 삭제 및 cookie 에서 refreshToken 삭제
+   */
   @Operation(
       summary = "로그아웃",
       description = "accessToken을 Authorization 헤더에 담아 요청하면, 서버에 저장된 refresh token을 삭제하여 로그아웃 처리합니다.",
       security = @SecurityRequirement(name = "jwtAuth")
   )
-  @ApiResponses(value = {
-      @ApiResponse(responseCode = "200", description = "로그아웃 성공",
-          content = @Content(
-              schema = @Schema(implementation = SuccessResponseDto.class),
-              examples = @ExampleObject(value = SwaggerExamples.LOGOUT_SUCCESS_EXAMPLE))),
-      @ApiResponse(responseCode = "401", description = "유효하지 않은 토큰",
-          content = @Content(
-              schema = @Schema(implementation = ErrorResponseDto.class),
-              examples = @ExampleObject(value = SwaggerExamples.INVALID_ACCESS_TOKEN_EXAMPLE))),
-      @ApiResponse(responseCode = "500", description = "서버 에러 발생",
-          content = @Content(
-              schema = @Schema(implementation = ErrorResponseDto.class),
-              examples = @ExampleObject(value = SwaggerExamples.INTERNAL_SERVER_ERROR_EXAMPLE)))
-  })
   @PostMapping("/logout")
-  public ResponseEntity<?> logout(HttpServletRequest request) {
-    String accessToken = request.getHeader("Authorization").substring(7);
-    String userEmail = jwtUtil.extractEmail(accessToken);
+  public ResponseEntity<Void> logout(
+      HttpServletRequest request,
+      HttpServletResponse response) {
+    jwtUtil.deleteRefreshToken(request);
+    setRefreshTokenInCookie(response, "");
 
-    refreshTokenRepository.findByUserEmail(userEmail).ifPresent(refreshTokenRepository::delete);
-
-    // 웹 쿠키 제거
-    ResponseCookie deleteRefreshCookie = ResponseCookie.from("refresh_token", "")
-        .httpOnly(true)
-        .secure(true)
-        .path("/")
-        .maxAge(0)
-        .sameSite("Lax")
-        .build();
-
-    return ResponseEntity.ok()
-        .header("Set-Cookie", deleteRefreshCookie.toString())
-        .body(SuccessResponseDto.success(200, "logout success", null));
+    return ResponseEntity.noContent().build();
   }
+
 
   @Operation(summary = "회원 탈퇴", description = "인증된 사용자의 계정을 삭제합니다. (설문지, refresh token 모두 cascade 로 삭제됩니다)")
   @ApiResponses(value = {
@@ -187,12 +167,10 @@ public class AccountController {
   }
 
 
-  private static void setRefreshTokenInCookie(HttpServletResponse response,
-      RefreshTokensDto refreshToken) {
-    // 7) 웹용: HttpOnly 쿠키로 재설정, 앱용: Body에도 포함
+  private static void setRefreshTokenInCookie(HttpServletResponse response, String Content) {
     ResponseCookie refreshCookie = ResponseCookie.from(
             "refresh_token",
-            refreshToken.getRefreshToken())
+            Content)
         .httpOnly(true)
         .secure(true)
         .path("/")

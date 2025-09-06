@@ -202,4 +202,10 @@ public class JwtUtil {
           "Refresh Token이 만료되었습니다. 다시 로그인해주세요.");
     }
   }
+
+  public void deleteRefreshToken(HttpServletRequest request) {
+    String accessToken = request.getHeader("Authorization").substring(7);
+    String userEmail = extractEmail(accessToken);
+    refreshTokenRepository.findByUserEmail(userEmail).ifPresent(refreshTokenRepository::delete);
+  }
 }
