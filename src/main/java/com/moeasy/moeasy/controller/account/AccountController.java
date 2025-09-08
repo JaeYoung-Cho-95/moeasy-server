@@ -2,12 +2,11 @@ package com.moeasy.moeasy.controller.account;
 
 import com.moeasy.moeasy.config.jwt.JwtUtil;
 import com.moeasy.moeasy.config.response.responseDto.ErrorResponseDto;
-import com.moeasy.moeasy.config.response.responseDto.SuccessResponseDto;
 import com.moeasy.moeasy.config.swagger.SwaggerExamples;
 import com.moeasy.moeasy.dto.account.MobileKakasSdkTokenDto;
-import com.moeasy.moeasy.dto.account.ProfileDto;
 import com.moeasy.moeasy.dto.account.request.RefreshTokenForAppDto;
 import com.moeasy.moeasy.dto.account.response.AppLoginDataDto;
+import com.moeasy.moeasy.dto.account.response.ProfileDto;
 import com.moeasy.moeasy.dto.account.response.RefreshTokensDto;
 import com.moeasy.moeasy.repository.account.RefreshTokenRepository;
 import com.moeasy.moeasy.service.account.CustomUserDetails;
@@ -138,36 +137,28 @@ public class AccountController {
     return ResponseEntity.noContent().build();
   }
 
+
+  /**
+   * 마이페이지에서 사용되는 유저 정보 조회 api
+   */
   @Operation(
       summary = "유저 정보 조회",
       description = "accessToken을 Authorization 헤더에 담아 요청하면, name / email / profile url 을 반환합니다.",
       security = @SecurityRequirement(name = "jwtAuth")
   )
-  @ApiResponses(value = {
-      @ApiResponse(responseCode = "200", description = "조회 성공",
-          content = @Content(
-              schema = @Schema(implementation = SuccessResponseDto.class),
-              examples = @ExampleObject(value = SwaggerExamples.SUCCESS_LOGIN_EXAMPLE))),
-      @ApiResponse(responseCode = "401", description = "유효하지 않은 토큰",
-          content = @Content(
-              schema = @Schema(implementation = ErrorResponseDto.class),
-              examples = @ExampleObject(value = SwaggerExamples.INVALID_ACCESS_TOKEN_EXAMPLE))),
-  })
   @GetMapping
-  public ResponseEntity<SuccessResponseDto<ProfileDto>> getProfileInfo(
-      @AuthenticationPrincipal CustomUserDetails user) throws Exception {
-    String presignedUrl = awsService.generatePresignedUrl(user.getProfileUrl(), "profile");
-    return ResponseEntity.ok()
-        .body(SuccessResponseDto.success(
-            200, "success", ProfileDto.builder()
-                .email(user.getEmail())
-                .name(user.getName())
-                .profileUrl(presignedUrl)
-                .build()
-        ));
+  public ProfileDto getProfileInfo(
+      @AuthenticationPrincipal CustomUserDetails user) {
+    return ProfileDto.from(
+        user,
+        awsService.generatePresignedUrl(user.getProfileUrl(), "profile")
+    );
   }
 
 
+  /**
+   * cookie 에서 refreshToken 설정
+   */
   private static void setRefreshTokenInCookie(HttpServletResponse response, String Content) {
     ResponseCookie refreshCookie = ResponseCookie.from(
             "refresh_token",
