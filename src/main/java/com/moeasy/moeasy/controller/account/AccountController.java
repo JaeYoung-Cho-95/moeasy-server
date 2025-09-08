@@ -8,7 +8,6 @@ import com.moeasy.moeasy.dto.account.request.RefreshTokenForAppDto;
 import com.moeasy.moeasy.dto.account.response.AppLoginDataDto;
 import com.moeasy.moeasy.dto.account.response.ProfileDto;
 import com.moeasy.moeasy.dto.account.response.RefreshTokensDto;
-import com.moeasy.moeasy.repository.account.RefreshTokenRepository;
 import com.moeasy.moeasy.service.account.CustomUserDetails;
 import com.moeasy.moeasy.service.account.KakaoService;
 import com.moeasy.moeasy.service.account.MemberService;
@@ -55,7 +54,6 @@ public class AccountController {
 
   private final KakaoService kakaoService;
   private final JwtUtil jwtUtil;
-  private final RefreshTokenRepository refreshTokenRepository;
   private final MemberService memberService;
   private final AwsService awsService;
 
