@@ -124,15 +124,16 @@ public class AccountController {
   }
 
 
-  @Operation(summary = "회원 탈퇴", description = "인증된 사용자의 계정을 삭제합니다. (설문지, refresh token 모두 cascade 로 삭제됩니다)")
-  @ApiResponses(value = {
-      @ApiResponse(responseCode = "204", description = "회원 탈퇴 성공 (내용 없음)"),
-      @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자"),
-      @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음")
-  })
+  /**
+   * 회원 탈퇴 api. 보유하고 있던 데이터를 모두 CASCADE 로 삭제합니다.
+   */
+  @Operation(
+      summary = "회원 탈퇴",
+      description = "인증된 사용자의 계정을 삭제합니다. (설문지, refreshToken 모두 cascade 로 삭제됩니다)",
+      security = @SecurityRequirement(name = "jwtAuth")
+  )
   @DeleteMapping
-  public ResponseEntity<Void> deleteAccount(@AuthenticationPrincipal CustomUserDetails user)
-      throws Exception {
+  public ResponseEntity<Void> deleteAccount(@AuthenticationPrincipal CustomUserDetails user) {
     memberService.deleteMember(user.getId());
     return ResponseEntity.noContent().build();
   }
