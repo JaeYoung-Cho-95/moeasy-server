@@ -1,8 +1,15 @@
 package com.moeasy.moeasy.service.aws;
 
+import com.moeasy.moeasy.config.response.custom.CustomErrorException;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.time.Duration;
+import javax.imageio.ImageIO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -12,68 +19,82 @@ import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.time.Duration;
-
 
 @Slf4j
 @RequiredArgsConstructor
 @Service
 public class AwsService {
 
-    private final S3Client s3Client;
-    private final S3Presigner s3Presigner;
+  private final S3Client s3Client;
+  private final S3Presigner s3Presigner;
 
-    @Value("${cloud.aws.s3.qr_bucket}")
-    private String qr_bucket;
+  @Value("${cloud.aws.s3.qr_bucket}")
+  private String QR_BUCKET;
 
-    @Value("${cloud.aws.s3.profile_bucket}")
-    private String profile_bucket;
+  @Value("${cloud.aws.s3.profile_bucket}")
+  private String PROFILE_BUCKET;
 
+  private final Duration PRESIGNED_URL_EXPIRED_TIME = Duration.ofHours(1);
 
-    public String upload(BufferedImage image, String id, String bucket) throws IOException {
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        ImageIO.write(image, "png", os);
-        byte[] buffer = os.toByteArray();
+  public String upload(BufferedImage image, String id, String bucket) {
+    encodingImage(image);
+    String fileName = createFileName(bucket, id);
+    byte[] buffer = makeBuffer();
+    s3Client.putObject(
+        buildPubObjectRequest(bucket, fileName, buffer),
+        RequestBody.fromBytes(buffer)
+    );
+    return generatePresignedUrl(fileName, bucket);
+  }
 
-        String fileName = bucket.equals("qr_code") ?
-                id + "/" + "qr_code.png" :
-                id + "/" + "profile.png";
-
-        // 1. PutObjectRequest 생성 (빌더 사용)
-        PutObjectRequest putObjectRequest = PutObjectRequest.builder()
-                .bucket(bucket.equals("qr_code") ? qr_bucket : profile_bucket)
-                .key(fileName)
-                .contentType("image/png")
-                .contentLength((long) buffer.length)
-                .build();
-
-        // 2. 객체 업로드
-        s3Client.putObject(putObjectRequest, RequestBody.fromBytes(buffer));
-
-        // 3. Presigned URL 생성
-        return generatePresignedUrl(fileName, bucket);
+  private void encodingImage(BufferedImage image) {
+    try {
+      ByteArrayOutputStream os = new ByteArrayOutputStream();
+      ImageIO.write(image, "png", os);
+    } catch (IOException e) {
+      throw CustomErrorException.from(HttpStatus.INTERNAL_SERVER_ERROR, "qr image 인코딩 중 에러 발생");
     }
 
-    public String generatePresignedUrl(String fileName, String bucket) {
-        // GetObjectRequest 생성
-        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
-                .bucket(bucket.equals("qr_code") ? qr_bucket : profile_bucket)
-                .key(fileName)
-                .build();
+  }
 
-        // Presigned URL 생성 요청
-        GetObjectPresignRequest getObjectPresignRequest = GetObjectPresignRequest.builder()
-                .signatureDuration(Duration.ofHours(1)) // URL 유효 시간: 1시간
-                .getObjectRequest(getObjectRequest)
-                .build();
+  public String generatePresignedUrl(String fileName, String bucket) {
+    GetObjectRequest getObjectRequest = buildGetObjectRequest(fileName, bucket);
 
-        // URL 서명
-        PresignedGetObjectRequest presignedGetObjectRequest = s3Presigner.presignGetObject(getObjectPresignRequest);
+    GetObjectPresignRequest getObjectPresignRequest = GetObjectPresignRequest.builder()
+        .signatureDuration(PRESIGNED_URL_EXPIRED_TIME) // URL 유효 시간: 1시간
+        .getObjectRequest(getObjectRequest)
+        .build();
 
-        return presignedGetObjectRequest.url().toString();
-    }
+    PresignedGetObjectRequest presignedGetObjectRequest = s3Presigner.presignGetObject(
+        getObjectPresignRequest);
+
+    return presignedGetObjectRequest.url().toString();
+  }
+
+  private String createFileName(String bucket, String id) {
+    return bucket.equals("qr_code") ?
+        id + "/" + "qr_code.png" :
+        id + "/" + "profile.png";
+  }
+
+  private byte[] makeBuffer() {
+    ByteArrayOutputStream os = new ByteArrayOutputStream();
+    return os.toByteArray();
+  }
+
+  private PutObjectRequest buildPubObjectRequest(String bucket, String fileName, byte[] buffer) {
+    return PutObjectRequest.builder()
+        .bucket(bucket.equals("qr_code") ? QR_BUCKET : PROFILE_BUCKET)
+        .key(fileName)
+        .contentType("image/png")
+        .contentLength((long) buffer.length)
+        .build();
+  }
+
+  private GetObjectRequest buildGetObjectRequest(String fileName, String bucket) {
+    return GetObjectRequest.builder()
+        .bucket(bucket.equals("qr_code") ? QR_BUCKET : PROFILE_BUCKET)
+        .key(fileName)
+        .build();
+  }
 }

@@ -5,6 +5,7 @@ import com.moeasy.moeasy.config.response.responseDto.ErrorResponseDto;
 import com.moeasy.moeasy.config.response.responseDto.SuccessResponseDto;
 import com.moeasy.moeasy.config.swagger.SwaggerExamples;
 import com.moeasy.moeasy.domain.question.Question;
+import com.moeasy.moeasy.dto.onboarding.response.QrCodeResponseDto;
 import com.moeasy.moeasy.dto.quesiton.MultipleChoiceIncludeIdQuestionDto;
 import com.moeasy.moeasy.dto.quesiton.PatchQuestionTitleDto;
 import com.moeasy.moeasy.dto.quesiton.PatchQuestionTitleResponseDto;
@@ -15,9 +16,7 @@ import com.moeasy.moeasy.dto.quesiton.ShortAnswerIncludeIdQuestionDto;
 import com.moeasy.moeasy.dto.quesiton.VerifyQrCodeDto;
 import com.moeasy.moeasy.service.account.CustomUserDetails;
 import com.moeasy.moeasy.service.aws.AwsService;
-import com.moeasy.moeasy.service.question.QrCodeService;
 import com.moeasy.moeasy.service.question.QuestionService;
-import com.moeasy.moeasy.service.question.SaveQuestionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -28,7 +27,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +38,7 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
@@ -61,8 +60,6 @@ import org.springframework.web.bind.annotation.RestController;
 )
 public class QuestionController {
 
-  private final SaveQuestionService saveQuestionService;
-  private final QrCodeService qrCodeService;
   private final QuestionService questionService;
   private final AwsService awsService;
 
@@ -71,17 +68,11 @@ public class QuestionController {
       description = "생성된 설문지를 사용자와 매핑하여 저장하고, 저장된 설문지에 접근할 수 있는 QR코드를 반환합니다.",
       security = @SecurityRequirement(name = "jwtAuth"))
   @PostMapping
-  public ResponseEntity<SuccessResponseDto> saveQuestions(
+  @ResponseStatus(HttpStatus.CREATED)
+  public QrCodeResponseDto saveQuestions(
       @AuthenticationPrincipal CustomUserDetails user,
-      @RequestBody QuestionsRequestDto questionsRequestDto
-  ) throws Exception {
-    Long id = user.getId();
-    Question question = saveQuestionService.saveQuestionsJoinUser(id, questionsRequestDto);
-    Long questionId = question.getId();
-    Map<String, String> data = qrCodeService.getQrCodeS3Url(questionId);
-
-    return ResponseEntity.ok()
-        .body(SuccessResponseDto.success(201, "success", data));
+      @RequestBody QuestionsRequestDto dto) {
+    return questionService.saveQuestionsANdGetQrCodeS3Url(user, dto);
   }
 
 
@@ -162,7 +153,7 @@ public class QuestionController {
     return SuccessResponseDto.success(
         200,
         "success update title",
-        saveQuestionService.updateQuestionTitle(patchQuestionDto)
+        questionService.updateQuestionTitle(patchQuestionDto)
     );
   }
 }
