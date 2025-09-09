@@ -47,6 +47,18 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @RequestMapping("questions")
 @Tag(name = "Question", description = "'설문지' 제작 및 저장 관련 API")
+@ApiResponses(
+    value = {
+        @ApiResponse(responseCode = "401", description = "인증 실패",
+            content = @Content(
+                schema = @Schema(implementation = ErrorResponseDto.class),
+                examples = @ExampleObject(value = SwaggerExamples.INVALID_ACCESS_TOKEN_EXAMPLE))),
+        @ApiResponse(responseCode = "500", description = "서버 에러 발생 (QR코드 생성 실패 등)",
+            content = @Content(
+                schema = @Schema(implementation = ErrorResponseDto.class),
+                examples = @ExampleObject(value = SwaggerExamples.INTERNAL_SERVER_ERROR_EXAMPLE)))
+    }
+)
 public class QuestionController {
 
   private final SaveQuestionService saveQuestionService;
@@ -58,20 +70,6 @@ public class QuestionController {
   @Operation(summary = "'설문지' 저장 및 QR코드 생성",
       description = "생성된 설문지를 사용자와 매핑하여 저장하고, 저장된 설문지에 접근할 수 있는 QR코드를 반환합니다.",
       security = @SecurityRequirement(name = "jwtAuth"))
-  @ApiResponses(value = {
-      @ApiResponse(responseCode = "201", description = "저장 및 QR코드 생성 성공",
-          content = @Content(
-              schema = @Schema(implementation = SuccessResponseDto.class),
-              examples = @ExampleObject(value = SwaggerExamples.SAVE_QUESTION_SUCCESS_EXAMPLE))),
-      @ApiResponse(responseCode = "401", description = "인증 실패",
-          content = @Content(
-              schema = @Schema(implementation = ErrorResponseDto.class),
-              examples = @ExampleObject(value = SwaggerExamples.INVALID_ACCESS_TOKEN_EXAMPLE))),
-      @ApiResponse(responseCode = "500", description = "서버 에러 발생 (QR코드 생성 실패 등)",
-          content = @Content(
-              schema = @Schema(implementation = ErrorResponseDto.class),
-              examples = @ExampleObject(value = SwaggerExamples.INTERNAL_SERVER_ERROR_EXAMPLE)))
-  })
   @PostMapping
   public ResponseEntity<SuccessResponseDto> saveQuestions(
       @AuthenticationPrincipal CustomUserDetails user,
@@ -90,20 +88,6 @@ public class QuestionController {
   @Operation(summary = "QR코드 검증 및 '설문지' 조회",
       description = "QR코드를 통해 전달받은 정보(만료시간, 서명)를 검증하고, 유효한 경우 설문지 데이터를 반환합니다. 이 API는 인증이 필요하지 않습니다.",
       security = {})
-  @ApiResponses(value = {
-      @ApiResponse(responseCode = "200", description = "QR코드 검증 및 설문지 조회 성공",
-          content = @Content(
-              schema = @Schema(implementation = SuccessResponseDto.class),
-              examples = @ExampleObject(value = SwaggerExamples.MAKE_QUESTION_SUCCESS_EXAMPLE))),
-      @ApiResponse(responseCode = "410", description = "만료되었거나 유효하지 않은 QR 코드",
-          content = @Content(
-              schema = @Schema(implementation = ErrorResponseDto.class),
-              examples = @ExampleObject(value = SwaggerExamples.EXPIRED_QR_CODE_EXAMPLE))),
-      @ApiResponse(responseCode = "500", description = "서버 에러 발생 (설문지 데이터 파싱 오류 등)",
-          content = @Content(
-              schema = @Schema(implementation = ErrorResponseDto.class),
-              examples = @ExampleObject(value = SwaggerExamples.INTERNAL_SERVER_ERROR_EXAMPLE)))
-  })
   @PostMapping("/verifyQrCode")
   public ResponseEntity<?> verifyExpireWithSignature(@RequestBody VerifyQrCodeDto verifyQrCodeDto) {
     Optional<Question> optionalQuestion = qrCodeService.verifyQrCode(verifyQrCodeDto);
@@ -154,20 +138,6 @@ public class QuestionController {
   @Operation(summary = "생성한 설문지 list 일괄 조회",
       description = "accesstoken 을 header 에 담아 전달해주면 해당 유저의 설문지 리스트를 반환합니다.",
       security = {})
-  @ApiResponses(value = {
-      @ApiResponse(responseCode = "200", description = "설문지 조회",
-          content = @Content(
-              schema = @Schema(implementation = SuccessResponseDto.class),
-              examples = @ExampleObject(value = SwaggerExamples.QUESTION_LIST_SUCCESS))),
-      @ApiResponse(responseCode = "401", description = "유효하지 않은 토큰",
-          content = @Content(
-              schema = @Schema(implementation = ErrorResponseDto.class),
-              examples = @ExampleObject(value = SwaggerExamples.INVALID_ACCESS_TOKEN_EXAMPLE))),
-      @ApiResponse(responseCode = "500", description = "서버 에러 발생 (설문지 데이터 파싱 오류 등)",
-          content = @Content(
-              schema = @Schema(implementation = ErrorResponseDto.class),
-              examples = @ExampleObject(value = SwaggerExamples.INTERNAL_SERVER_ERROR_EXAMPLE)))
-  })
   @GetMapping
   public SuccessResponseDto<List<QuestionListDto>> getQuestions(
       @AuthenticationPrincipal CustomUserDetails user) {
@@ -185,20 +155,6 @@ public class QuestionController {
   @Operation(summary = "설문지 제목 수정",
       description = "accesstoken 을 header /  questionId, title 을 request body 에 담아주면 update 후 반홥합니다.",
       security = @SecurityRequirement(name = "jwtAuth"))
-  @ApiResponses(value = {
-      @ApiResponse(responseCode = "200", description = "설문지 조회",
-          content = @Content(
-              schema = @Schema(implementation = SuccessResponseDto.class),
-              examples = @ExampleObject(value = SwaggerExamples.QUESTION_UPDATE_TITLE))),
-      @ApiResponse(responseCode = "401", description = "유효하지 않은 토큰",
-          content = @Content(
-              schema = @Schema(implementation = ErrorResponseDto.class),
-              examples = @ExampleObject(value = SwaggerExamples.INVALID_ACCESS_TOKEN_EXAMPLE))),
-      @ApiResponse(responseCode = "500", description = "서버 에러 발생 (설문지 조회 안됨)",
-          content = @Content(
-              schema = @Schema(implementation = ErrorResponseDto.class),
-              examples = @ExampleObject(value = SwaggerExamples.INTERNAL_SERVER_ERROR_EXAMPLE)))
-  })
   @PatchMapping
   public SuccessResponseDto<PatchQuestionTitleResponseDto> patchQuestion(
       @AuthenticationPrincipal CustomUserDetails user,
