@@ -1,6 +1,6 @@
 package com.moeasy.moeasy.dto.llm.naver;
 
-import com.moeasy.moeasy.dto.quesiton.OnboardingRequestDto;
+import com.moeasy.moeasy.dto.onboarding.request.OnboardingRequestDto;
 import com.moeasy.moeasy.dto.quesiton.enums.ProductType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
