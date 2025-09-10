@@ -5,7 +5,7 @@ import com.moeasy.moeasy.config.swagger.SwaggerExamples;
 import com.moeasy.moeasy.dto.onboarding.request.OnboardingMakeQuestionRequestDto;
 import com.moeasy.moeasy.dto.onboarding.request.OnboardingRequestDto;
 import com.moeasy.moeasy.dto.onboarding.response.OnboardingQuestionDto;
-import com.moeasy.moeasy.dto.quesiton.QuestionResponseDto;
+import com.moeasy.moeasy.dto.onboarding.response.QuestionResponseDto;
 import com.moeasy.moeasy.service.account.CustomUserDetails;
 import com.moeasy.moeasy.service.question.MakeQuestionService;
 import com.moeasy.moeasy.service.question.OnBoardingService;
