@@ -74,31 +74,32 @@ public class QuestionService {
     }
   }
 
-  public Question saveQuestionsJoinUser(Long id, QuestionsRequestDto questionsRequestDto) {
+  public Question saveQuestionsJoinUser(Long id, QuestionsRequestDto dto) {
+    QuestionsDto questionsDto = QuestionsDto.from(dto);
+    Survey survey = makeAndGetSurvey(questionsDto);
+    Question question = createQuestion(dto, findMemberFyId(id), questionsDto);
+    question.linkSurvey(survey);
+
+    return questionRepository.save(question);
+  }
+
+  private Member findMemberFyId(Long id) {
     Optional<Member> findMember = memberRepository.findById(id);
     if (findMember.isEmpty()) {
-      throw new IllegalArgumentException("해당 ID의 회원을 찾을 수 없습니다: " + id);
+      throw CustomErrorException.from(HttpStatus.NOT_FOUND, "user 정보를 조회할 수 없습니다.");
     }
+    return findMember.get();
+  }
 
-    try {
-      QuestionsDto contentDto = new QuestionsDto(questionsRequestDto.getMultipleChoiceQuestions(),
-          questionsRequestDto.getShortAnswerQuestions());
-      List<MultipleChoiceIncludeIdQuestionDto> multipleChoiceQuestions = contentDto.getMultipleChoiceQuestions();
-      List<ShortAnswerIncludeIdQuestionDto> shortAnswerQuestions = contentDto.getShortAnswerQuestions();
-
-      Survey survey = makeAndGetSurvey(multipleChoiceQuestions, shortAnswerQuestions);
-
-      Question question = Question.builder()
-          .member(findMember.get())
-          .title(questionsRequestDto.getTitle())
-          .content(objectMapper.writeValueAsString(contentDto))
-          .build();
-      question.linkSurvey(survey);
-
-      return questionRepository.save(question);
-    } catch (JsonProcessingException e) {
-      throw new RuntimeException("\"QuestionDto를 JSON으로 변환하는 중 오류가 발생했습니다. : " + e);
-    }
+  private Question createQuestion(
+      QuestionsRequestDto questionsRequestDto,
+      Member member,
+      QuestionsDto questionsDto) {
+    return Question.from(
+        member,
+        questionsRequestDto.getTitle(),
+        makeQuestionsDataToJson(questionsDto)
+    );
   }
 
   public PatchQuestionTitleResponseDto updateQuestionTitle(
@@ -123,27 +124,42 @@ public class QuestionService {
     return question;
   }
 
-  private Survey makeAndGetSurvey(List<MultipleChoiceIncludeIdQuestionDto> multipleChoiceQuestions,
-      List<ShortAnswerIncludeIdQuestionDto> shortAnswerQuestions) throws JsonProcessingException {
-    SurveySaveDto data = getSurveySaveDto(multipleChoiceQuestions, shortAnswerQuestions);
-    String surveyJson = objectMapper.writeValueAsString(data);
-    Survey survey = Survey.builder()
-        .resultsJson(surveyJson)
-        .build();
+  private Survey makeAndGetSurvey(QuestionsDto questionsDto) {
+    SurveySaveDto data = getSurveySaveDto(questionsDto);
+    String surveyJson = makeSurveyDataToJson(data);
+    Survey survey = Survey.from(surveyJson);
     surveyRepository.save(survey);
     return survey;
   }
 
+  private String makeSurveyDataToJson(SurveySaveDto dto) {
+    try {
+      return objectMapper.writeValueAsString(dto);
+    } catch (JsonProcessingException e) {
+      throw CustomErrorException.from(HttpStatus.INTERNAL_SERVER_ERROR,
+          "설문지에서 survey 형식 생성 중 json 변환 error 발생");
+    }
+  }
+
+  private String makeQuestionsDataToJson(QuestionsDto dto) {
+    try {
+      return objectMapper.writeValueAsString(dto);
+    } catch (JsonProcessingException e) {
+      throw CustomErrorException.from(HttpStatus.INTERNAL_SERVER_ERROR,
+          "설문지 json 으로 변환 중 error 발생");
+    }
+  }
+
   private SurveySaveDto getSurveySaveDto(
-      List<MultipleChoiceIncludeIdQuestionDto> multipleChoiceQuestions,
-      List<ShortAnswerIncludeIdQuestionDto> shortAnswerQuestions) {
+      QuestionsDto questionsDto) {
+
+    List<MultipleChoiceIncludeIdQuestionDto> multipleChoiceQuestions = questionsDto.getMultipleChoiceQuestions();
+    List<ShortAnswerIncludeIdQuestionDto> shortAnswerQuestions = questionsDto.getShortAnswerQuestions();
     List<Map<String, QuestionAnswerDto>> temp1 = new ArrayList<>();
+
     for (MultipleChoiceIncludeIdQuestionDto multipleChoiceQuestionDto : multipleChoiceQuestions) {
       String question = multipleChoiceQuestionDto.getQuestion();
       List<String> choices = multipleChoiceQuestionDto.getChoices();
-
-      Long questionId = multipleChoiceQuestionDto.getId();
-      Map<String, Long> temp = new HashMap<>();
 
       temp1.add(extractedSurveyForm(question, choices));
     }
