@@ -14,6 +14,7 @@ import com.moeasy.moeasy.dto.quesiton.QuestionsDto;
 import com.moeasy.moeasy.dto.quesiton.ShortAnswerIncludeIdQuestionDto;
 import com.moeasy.moeasy.dto.quesiton.VerifyQrCodeDto;
 import com.moeasy.moeasy.dto.quesiton.request.QuestionsRequestDto;
+import com.moeasy.moeasy.dto.quesiton.response.QuestionListResponseDto;
 import com.moeasy.moeasy.dto.quesiton.response.QuestionsResponseDto;
 import com.moeasy.moeasy.dto.survey.QuestionAnswerDto;
 import com.moeasy.moeasy.dto.survey.SurveySaveDto;
@@ -21,6 +22,7 @@ import com.moeasy.moeasy.repository.account.MemberRepository;
 import com.moeasy.moeasy.repository.question.QuestionRepository;
 import com.moeasy.moeasy.repository.survey.SurveyRepository;
 import com.moeasy.moeasy.service.account.CustomUserDetails;
+import com.moeasy.moeasy.service.aws.AwsService;
 import jakarta.persistence.EntityNotFoundException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -45,6 +47,7 @@ public class QuestionService {
   private final MemberRepository memberRepository;
   private final SurveyRepository surveyRepository;
   private final QrCodeService qrCodeService;
+  private final AwsService awsService;
   private final ObjectMapper objectMapper;
 
   public QrCodeResponseDto saveQuestionsANdGetQrCodeS3Url(CustomUserDetails user,
@@ -200,9 +203,17 @@ public class QuestionService {
     List<Question> questions = questionRepository.findAllByMember_IdOrderByCreatedTimeDesc(
         memberId);
     LocalDateTime now = LocalDateTime.now();
-    for (Question q : questions) {
-      q.refreshExpired(now);
+    for (Question question : questions) {
+      question.refreshExpired(now);
     }
     return questions;
+  }
+
+  public List<QuestionListResponseDto> findQuestionListByUser(CustomUserDetails user) {
+    List<Question> questionList = findAllByMemberAndRefresh(user.getId());
+    return questionList.stream()
+        .map(q -> QuestionListResponseDto.from(
+            q, awsService.generatePresignedUrl(q.getId() + "/qr_code.png", "qr_code"))
+        ).toList();
   }
 }

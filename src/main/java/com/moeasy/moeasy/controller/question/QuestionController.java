@@ -3,13 +3,12 @@ package com.moeasy.moeasy.controller.question;
 import com.moeasy.moeasy.config.response.responseDto.ErrorResponseDto;
 import com.moeasy.moeasy.config.response.responseDto.SuccessResponseDto;
 import com.moeasy.moeasy.config.swagger.SwaggerExamples;
-import com.moeasy.moeasy.domain.question.Question;
 import com.moeasy.moeasy.dto.onboarding.response.QrCodeResponseDto;
 import com.moeasy.moeasy.dto.quesiton.PatchQuestionTitleDto;
 import com.moeasy.moeasy.dto.quesiton.PatchQuestionTitleResponseDto;
-import com.moeasy.moeasy.dto.quesiton.QuestionListDto;
 import com.moeasy.moeasy.dto.quesiton.VerifyQrCodeDto;
 import com.moeasy.moeasy.dto.quesiton.request.QuestionsRequestDto;
+import com.moeasy.moeasy.dto.quesiton.response.QuestionListResponseDto;
 import com.moeasy.moeasy.dto.quesiton.response.QuestionsResponseDto;
 import com.moeasy.moeasy.service.account.CustomUserDetails;
 import com.moeasy.moeasy.service.aws.AwsService;
@@ -82,21 +81,13 @@ public class QuestionController {
       description = "accesstoken 을 header 에 담아 전달해주면 해당 유저의 설문지 리스트를 반환합니다.",
       security = {})
   @GetMapping
-  public SuccessResponseDto<List<QuestionListDto>> getQuestions(
+  public List<QuestionListResponseDto> getQuestions(
       @AuthenticationPrincipal CustomUserDetails user) {
-    List<Question> questions = questionService.findAllByMemberAndRefresh(user.getId());
-
-    return SuccessResponseDto.success(
-        200,
-        "success",
-        questions.stream()
-            .map(q -> QuestionListDto.from(
-                q, awsService.generatePresignedUrl(q.getId() + "/qr_code.png", "qr_code"))
-            ).toList());
+    return questionService.findQuestionListByUser(user);
   }
 
   @Operation(summary = "설문지 제목 수정",
-      description = "accesstoken 을 header /  questionId, title 을 request body 에 담아주면 update 후 반홥합니다.",
+      description = "accesstoken 을 header / questionId, title 을 request body 에 담아주면 update 후 반홥합니다.",
       security = @SecurityRequirement(name = "jwtAuth"))
   @PatchMapping
   public SuccessResponseDto<PatchQuestionTitleResponseDto> patchQuestion(
