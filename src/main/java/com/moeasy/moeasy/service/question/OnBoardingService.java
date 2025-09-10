@@ -3,14 +3,15 @@ package com.moeasy.moeasy.service.question;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.moeasy.moeasy.config.response.custom.CustomErrorException;
 import com.moeasy.moeasy.dto.llm.naver.NaverEmbeddingResponseDto;
 import com.moeasy.moeasy.dto.llm.naver.PayloadDto;
 import com.moeasy.moeasy.dto.llm.naver.RequestOnboardingDto;
 import com.moeasy.moeasy.dto.llm.naver.RewriterRequestDto;
 import com.moeasy.moeasy.dto.llm.naver.RewriterResponseDto;
 import com.moeasy.moeasy.dto.llm.naver.searchFromVectorDBDto;
-import com.moeasy.moeasy.dto.onboarding.OnboardingQuestionDto;
-import com.moeasy.moeasy.dto.quesiton.OnboardingRequestDto;
+import com.moeasy.moeasy.dto.onboarding.request.OnboardingRequestDto;
+import com.moeasy.moeasy.dto.onboarding.response.OnboardingQuestionDto;
 import com.moeasy.moeasy.service.llm.NaverCloudStudioService;
 import io.milvus.client.MilvusServiceClient;
 import io.milvus.common.clientenum.ConsistencyLevelEnum;
@@ -28,6 +29,7 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ResourceLoader;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -60,18 +62,14 @@ public class OnBoardingService extends NaverCloudStudioService {
   }
 
   public List<OnboardingQuestionDto> makeOnBoardingQuestions(
-      OnboardingRequestDto inputDto)
-      throws JsonProcessingException {
+      OnboardingRequestDto inputDto) {
     List<searchFromVectorDBDto> searchDto = searchTop3(inputDto, extractEmbedding(inputDto));
-
     RequestOnboardingDto requestDto = RequestOnboardingDto.from(inputDto, searchDto);
-
     return requestOnboardingQuestions(requestDto);
   }
 
   private List<Float> extractEmbedding(OnboardingRequestDto onboardingRequestDto) {
     String queryText = getQueryText(onboardingRequestDto);
-
     NaverEmbeddingResponseDto embedding = getEmbedding(queryText);
     return embedding.getResult().getEmbedding();
   }
@@ -166,11 +164,14 @@ public class OnBoardingService extends NaverCloudStudioService {
 
 
   private List<OnboardingQuestionDto> requestOnboardingQuestions(
-      RequestOnboardingDto requestOnboardingDto)
-      throws JsonProcessingException {
-    String systemPrompt = getPromptWithFilePath("prompts/onboardingMakeInfoQuestions.txt");
-    String userPrompt = objectMapper.writeValueAsString(requestOnboardingDto);
-    return chatHcx007(systemPrompt, userPrompt, new TypeReference<>() {
-    });
+      RequestOnboardingDto requestOnboardingDto) {
+    try {
+      String systemPrompt = getPromptWithFilePath("prompts/onboardingMakeInfoQuestions.txt");
+      String userPrompt = objectMapper.writeValueAsString(requestOnboardingDto);
+      return chatHcx007(systemPrompt, userPrompt, new TypeReference<>() {
+      });
+    } catch (JsonProcessingException e) {
+      throw CustomErrorException.from(HttpStatus.INTERNAL_SERVER_ERROR, "Json 변환 중 Error 발생");
+    }
   }
 }

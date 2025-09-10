@@ -1,6 +1,6 @@
 package com.moeasy.moeasy.dto.llm.naver;
 
-import com.moeasy.moeasy.dto.quesiton.OnboardingRequestDto;
+import com.moeasy.moeasy.dto.onboarding.request.OnboardingRequestDto;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
