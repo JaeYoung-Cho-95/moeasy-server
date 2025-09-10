@@ -2,11 +2,11 @@ package com.moeasy.moeasy.controller.question;
 
 import com.moeasy.moeasy.config.response.responseDto.ErrorResponseDto;
 import com.moeasy.moeasy.config.swagger.SwaggerExamples;
-import com.moeasy.moeasy.dto.onboarding.response.QrCodeResponseDto;
 import com.moeasy.moeasy.dto.quesiton.PatchQuestionTitleResponseDto;
 import com.moeasy.moeasy.dto.quesiton.VerifyQrCodeDto;
 import com.moeasy.moeasy.dto.quesiton.request.PatchQuestionTitleRequestDto;
 import com.moeasy.moeasy.dto.quesiton.request.QuestionsRequestDto;
+import com.moeasy.moeasy.dto.quesiton.response.QrCodeResponseDto;
 import com.moeasy.moeasy.dto.quesiton.response.QuestionListResponseDto;
 import com.moeasy.moeasy.dto.quesiton.response.QuestionsResponseDto;
 import com.moeasy.moeasy.service.account.CustomUserDetails;
