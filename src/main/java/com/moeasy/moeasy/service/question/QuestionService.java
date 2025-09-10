@@ -8,11 +8,11 @@ import com.moeasy.moeasy.domain.question.Question;
 import com.moeasy.moeasy.domain.survey.Survey;
 import com.moeasy.moeasy.dto.onboarding.response.QrCodeResponseDto;
 import com.moeasy.moeasy.dto.quesiton.MultipleChoiceIncludeIdQuestionDto;
-import com.moeasy.moeasy.dto.quesiton.PatchQuestionTitleDto;
 import com.moeasy.moeasy.dto.quesiton.PatchQuestionTitleResponseDto;
 import com.moeasy.moeasy.dto.quesiton.QuestionsDto;
 import com.moeasy.moeasy.dto.quesiton.ShortAnswerIncludeIdQuestionDto;
 import com.moeasy.moeasy.dto.quesiton.VerifyQrCodeDto;
+import com.moeasy.moeasy.dto.quesiton.request.PatchQuestionTitleRequestDto;
 import com.moeasy.moeasy.dto.quesiton.request.QuestionsRequestDto;
 import com.moeasy.moeasy.dto.quesiton.response.QuestionListResponseDto;
 import com.moeasy.moeasy.dto.quesiton.response.QuestionsResponseDto;
@@ -23,7 +23,6 @@ import com.moeasy.moeasy.repository.question.QuestionRepository;
 import com.moeasy.moeasy.repository.survey.SurveyRepository;
 import com.moeasy.moeasy.service.account.CustomUserDetails;
 import com.moeasy.moeasy.service.aws.AwsService;
-import jakarta.persistence.EntityNotFoundException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -106,22 +105,16 @@ public class QuestionService {
   }
 
   public PatchQuestionTitleResponseDto updateQuestionTitle(
-      PatchQuestionTitleDto patchQuestionTitleDto) {
-    Long id = patchQuestionTitleDto.getId();
-    String title = patchQuestionTitleDto.getTitle();
-
-    Question question = updateQuestion(id, title);
-
-    return PatchQuestionTitleResponseDto.builder()
-        .title(question.getTitle())
-        .id(question.getId())
-        .build();
+      PatchQuestionTitleRequestDto dto) {
+    Question question = updateQuestion(dto.getId(), dto.getTitle());
+    return PatchQuestionTitleResponseDto.from(question);
   }
 
   public Question updateQuestion(Long id, String title) {
     Question question = questionRepository.findById(id)
         .orElseThrow(
-            () -> new EntityNotFoundException("Id : " + id + " 에 해당하는 설문지를 찾을 수 없습니다."));
+            () -> CustomErrorException.from(HttpStatus.NOT_FOUND,
+                "Id : " + id + " 에 해당하는 설문지를 찾을 수 없습니다."));
 
     question.updateTitle(title);
     return question;

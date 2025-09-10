@@ -1,17 +1,15 @@
 package com.moeasy.moeasy.controller.question;
 
 import com.moeasy.moeasy.config.response.responseDto.ErrorResponseDto;
-import com.moeasy.moeasy.config.response.responseDto.SuccessResponseDto;
 import com.moeasy.moeasy.config.swagger.SwaggerExamples;
 import com.moeasy.moeasy.dto.onboarding.response.QrCodeResponseDto;
-import com.moeasy.moeasy.dto.quesiton.PatchQuestionTitleDto;
 import com.moeasy.moeasy.dto.quesiton.PatchQuestionTitleResponseDto;
 import com.moeasy.moeasy.dto.quesiton.VerifyQrCodeDto;
+import com.moeasy.moeasy.dto.quesiton.request.PatchQuestionTitleRequestDto;
 import com.moeasy.moeasy.dto.quesiton.request.QuestionsRequestDto;
 import com.moeasy.moeasy.dto.quesiton.response.QuestionListResponseDto;
 import com.moeasy.moeasy.dto.quesiton.response.QuestionsResponseDto;
 import com.moeasy.moeasy.service.account.CustomUserDetails;
-import com.moeasy.moeasy.service.aws.AwsService;
 import com.moeasy.moeasy.service.question.QuestionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -54,7 +52,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class QuestionController {
 
   private final QuestionService questionService;
-  private final AwsService awsService;
 
   @Operation(summary = "'설문지' 저장 및 QR코드 생성",
       description = "생성된 설문지를 사용자와 매핑하여 저장하고, 저장된 설문지에 접근할 수 있는 QR코드를 반환합니다.",
@@ -86,17 +83,14 @@ public class QuestionController {
     return questionService.findQuestionListByUser(user);
   }
 
+
   @Operation(summary = "설문지 제목 수정",
       description = "accesstoken 을 header / questionId, title 을 request body 에 담아주면 update 후 반홥합니다.",
       security = @SecurityRequirement(name = "jwtAuth"))
   @PatchMapping
-  public SuccessResponseDto<PatchQuestionTitleResponseDto> patchQuestion(
+  public PatchQuestionTitleResponseDto patchQuestion(
       @AuthenticationPrincipal CustomUserDetails user,
-      @RequestBody PatchQuestionTitleDto patchQuestionDto) {
-    return SuccessResponseDto.success(
-        200,
-        "success update title",
-        questionService.updateQuestionTitle(patchQuestionDto)
-    );
+      @RequestBody PatchQuestionTitleRequestDto dto) {
+    return questionService.updateQuestionTitle(dto);
   }
 }

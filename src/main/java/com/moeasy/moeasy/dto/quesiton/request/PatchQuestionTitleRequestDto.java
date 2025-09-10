@@ -1,4 +1,4 @@
-package com.moeasy.moeasy.dto.quesiton;
+package com.moeasy.moeasy.dto.quesiton.request;
 
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -9,7 +9,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Data
 @AllArgsConstructor
-public class PatchQuestionTitleDto {
+@Schema(name = "설문지 제목 수정에 필요한 데이터", description = "questionId 와 변경할 title")
+public class PatchQuestionTitleRequestDto {
 
   @Schema(description = "questionId", example = "1235")
   private Long id;
