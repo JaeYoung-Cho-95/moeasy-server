@@ -61,6 +61,14 @@ public class Question {
     this.content = content;
   }
 
+  public static Question from(Member member, String title, String content) {
+    return Question.builder()
+        .member(member)
+        .title(title)
+        .content(content)
+        .build();
+  }
+
   @PrePersist
   public void onPrePersist() {
     this.createdTime = LocalDateTime.now();
