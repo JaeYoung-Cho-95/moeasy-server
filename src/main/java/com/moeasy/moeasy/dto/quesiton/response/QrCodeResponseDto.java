@@ -1,4 +1,4 @@
-package com.moeasy.moeasy.dto.onboarding.response;
+package com.moeasy.moeasy.dto.quesiton.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
