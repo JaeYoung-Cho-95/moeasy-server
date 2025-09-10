@@ -2,6 +2,7 @@ package com.moeasy.moeasy.service.question;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.moeasy.moeasy.config.response.custom.CustomErrorException;
 import com.moeasy.moeasy.domain.account.Member;
 import com.moeasy.moeasy.domain.question.Question;
 import com.moeasy.moeasy.domain.survey.Survey;
@@ -10,8 +11,10 @@ import com.moeasy.moeasy.dto.quesiton.MultipleChoiceIncludeIdQuestionDto;
 import com.moeasy.moeasy.dto.quesiton.PatchQuestionTitleDto;
 import com.moeasy.moeasy.dto.quesiton.PatchQuestionTitleResponseDto;
 import com.moeasy.moeasy.dto.quesiton.QuestionsDto;
-import com.moeasy.moeasy.dto.quesiton.QuestionsRequestDto;
 import com.moeasy.moeasy.dto.quesiton.ShortAnswerIncludeIdQuestionDto;
+import com.moeasy.moeasy.dto.quesiton.VerifyQrCodeDto;
+import com.moeasy.moeasy.dto.quesiton.request.QuestionsRequestDto;
+import com.moeasy.moeasy.dto.quesiton.response.QuestionsResponseDto;
 import com.moeasy.moeasy.dto.survey.QuestionAnswerDto;
 import com.moeasy.moeasy.dto.survey.SurveySaveDto;
 import com.moeasy.moeasy.repository.account.MemberRepository;
@@ -28,6 +31,7 @@ import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,6 +52,26 @@ public class QuestionService {
     Long id = user.getId();
     Question question = saveQuestionsJoinUser(id, questionsRequestDto);
     return qrCodeService.makeQrCodeS3Url(question.getId());
+  }
+
+  public QuestionsResponseDto verifyQrCode(VerifyQrCodeDto dto) {
+    Question question = qrCodeService.verifyQrCode(dto);
+    QuestionsDto questionsDto = extractContent(question.getContent());
+
+    return QuestionsResponseDto.from(
+        question.getTitle(),
+        questionsDto.getMultipleChoiceQuestions(),
+        questionsDto.getShortAnswerQuestions()
+    );
+  }
+
+  private QuestionsDto extractContent(String content) {
+    try {
+      return objectMapper.readValue(content, QuestionsDto.class);
+    } catch (JsonProcessingException e) {
+      throw CustomErrorException.from(HttpStatus.INTERNAL_SERVER_ERROR,
+          "설문지 Json 으로 직렬화 중 error 발생");
+    }
   }
 
   public Question saveQuestionsJoinUser(Long id, QuestionsRequestDto questionsRequestDto) {

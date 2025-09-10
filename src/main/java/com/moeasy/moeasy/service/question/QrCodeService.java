@@ -90,23 +90,41 @@ public class QrCodeService {
     }
   }
 
-  public Optional<Question> verifyQrCode(VerifyQrCodeDto verifyQrCodeDto) {
-    long expires = Long.parseLong(verifyQrCodeDto.getExpires());
-    if (Instant.now().toEpochMilli() > expires) {
-      return Optional.empty();
+  public Question verifyQrCode(VerifyQrCodeDto verifyQrCodeDto) {
+    validateExpired(verifyQrCodeDto);
+    validateSignatureInQrCode(verifyQrCodeDto);
+    return findById(verifyQrCodeDto);
+  }
+
+  private Question findById(VerifyQrCodeDto verifyQrCodeDto) {
+    Optional<Question> optionalQuestion = questionRepository.findById(
+        Long.parseLong(verifyQrCodeDto.getQuestionId()));
+
+    if (optionalQuestion.isEmpty()) {
+      throw CustomErrorException.from(HttpStatus.NOT_FOUND, "설문지가 존재하지 않습니다.");
     }
 
+    return optionalQuestion.get();
+  }
+
+  private void validateSignatureInQrCode(VerifyQrCodeDto verifyQrCodeDto) {
     String dataToVerify =
         "expires=" + verifyQrCodeDto.getExpires() + "&id=" + verifyQrCodeDto.getQuestionId();
     String expectedSignature = createSignature(dataToVerify);
 
-    boolean isVerifed = MessageDigest.isEqual(expectedSignature.getBytes(StandardCharsets.UTF_8),
-        verifyQrCodeDto.getSignature().getBytes(StandardCharsets.UTF_8));
-
-    if (isVerifed) {
-      return questionRepository.findById(Long.parseLong(verifyQrCodeDto.getQuestionId()));
+    if (MessageDigest.isEqual(expectedSignature.getBytes(StandardCharsets.UTF_8),
+        verifyQrCodeDto.getSignature().getBytes(StandardCharsets.UTF_8))) {
+      return;
     }
-    return Optional.empty();
+    throw CustomErrorException.from(HttpStatus.BAD_REQUEST, "QrCode의 서명이 잘못되었습니다.");
+  }
+
+  private long validateExpired(VerifyQrCodeDto verifyQrCodeDto) {
+    long expires = Long.parseLong(verifyQrCodeDto.getExpires());
+    if (Instant.now().toEpochMilli() > expires) {
+      throw CustomErrorException.from(HttpStatus.GONE, "해당 qrCode 는 생성된지 1주일이 지나 삭제 되었습니다.");
+    }
+    return expires;
   }
 
   public void saveUrlInQrCode(Long questiondId, String url) {
