@@ -1,16 +1,18 @@
 package com.moeasy.moeasy.service.survey;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.moeasy.moeasy.config.response.custom.CustomErrorException;
 import com.moeasy.moeasy.domain.question.Question;
 import com.moeasy.moeasy.domain.survey.Survey;
 import com.moeasy.moeasy.repository.survey.SurveyRepository;
-import jakarta.persistence.EntityNotFoundException;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,57 +27,67 @@ public class GetSurveyService {
   // 추가: summarizeJson을 ObjectMapper로 파싱하여 JsonNode로 반환
   @Transactional(readOnly = true)
   public JsonNode getSurveyAsJson(Long surveyId) {
-    Survey survey = surveyRepository.findById(surveyId)
-        .orElseThrow(() -> new EntityNotFoundException(
-            "Id : " + surveyId + "를 통해 조회되는 survey 가 없습니다."));
+    Survey survey = extractSurvey(surveyId);
 
     String summarizeJson = survey.getSummarizeJson();
-
     Question question = survey.getQuestion();
     Boolean expired = question != null ? question.getExpired() : null;
     LocalDateTime expiredTime = question != null ? question.getExpiredTime() : null;
 
-    // summarizeJson이 비어있으면 빈 데이터 + 만료정보만 담아 반환
     if (summarizeJson == null || summarizeJson.isBlank()) {
-      log.warn("Survey(id={})의 summarizeJson이 비어 있습니다.", survey.getId());
-      ObjectNode out = objectMapper.createObjectNode();
-      putExpiredFields(out, expired, expiredTime);
-      return out; // { "expired": ..., "expiredTime": ... }
+      return putExpiredFields(expired, expiredTime);
     }
 
-    try {
-      JsonNode parsed = objectMapper.readTree(summarizeJson);
+    JsonNode jsonNode = extractedSummarizeObject(summarizeJson);
+    return putExpiredFields(jsonNode, expired, expiredTime);
+  }
 
-      if (parsed.isObject()) {
-        ObjectNode obj = (ObjectNode) parsed;
-        putExpiredFields(obj, expired, expiredTime);
-        return obj;
-      } else {
-        ObjectNode wrapper = objectMapper.createObjectNode();
-        wrapper.set("data", parsed);
-        putExpiredFields(wrapper, expired, expiredTime);
-        return wrapper;
-      }
-    } catch (Exception e) {
-      log.error("summarizeJson 파싱 실패. surveyId={}, summarizeJson={}", survey.getId(), summarizeJson,
-          e);
-      ObjectNode out = objectMapper.createObjectNode();
-      putExpiredFields(out, expired, expiredTime);
-      return out;
+  private JsonNode extractedSummarizeObject(String summarizeJson) {
+    try {
+      return objectMapper.readTree(summarizeJson);
+    } catch (JsonProcessingException e) {
+      throw CustomErrorException.from(
+          HttpStatus.INTERNAL_SERVER_ERROR,
+          "설문 결과지를 json 으로 변환 중 에러 발생");
     }
   }
 
-  private void putExpiredFields(ObjectNode node, Boolean expired, LocalDateTime expiredTime) {
-    if (expired == null) {
-      node.set("expired", NullNode.getInstance());
-    } else {
-      node.put("expired", expired);
-    }
+  private Survey extractSurvey(Long surveyId) {
+    return surveyRepository.findById(surveyId)
+        .orElseThrow(() -> CustomErrorException.from(
+            HttpStatus.NOT_FOUND,
+            "Id : " + surveyId + "를 통해 조회되는 survey 가 없습니다.")
+        );
+  }
 
+  private ObjectNode putExpiredFields(JsonNode parsed, Boolean expired, LocalDateTime expiredTime) {
+    ObjectNode node = objectMapper.createObjectNode();
+    node.set("data", parsed);
+    ObjectNode nodeInsertedExpired = insertExpired(node, expired);
+    return insertExpiredTime(nodeInsertedExpired, expiredTime);
+  }
+
+  private ObjectNode putExpiredFields(Boolean expired, LocalDateTime expiredTime) {
+    ObjectNode node = objectMapper.createObjectNode();
+    ObjectNode nodeInsertedExpired = insertExpired(node, expired);
+    return insertExpiredTime(nodeInsertedExpired, expiredTime);
+  }
+
+  private ObjectNode insertExpiredTime(ObjectNode node, LocalDateTime expiredTime) {
     if (expiredTime == null) {
       node.set("expiredTime", NullNode.getInstance());
     } else {
       node.put("expiredTime", expiredTime.toString());
     }
+    return node;
+  }
+
+  private ObjectNode insertExpired(ObjectNode node, Boolean expired) {
+    if (expired == null) {
+      node.set("expired", NullNode.getInstance());
+    } else {
+      node.put("expired", expired);
+    }
+    return node;
   }
 }
