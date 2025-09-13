@@ -2,22 +2,23 @@ package com.moeasy.moeasy.service.survey;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.moeasy.moeasy.config.response.custom.CustomErrorException;
 import com.moeasy.moeasy.domain.question.Question;
 import com.moeasy.moeasy.domain.survey.Survey;
 import com.moeasy.moeasy.dto.survey.QuestionAnswerDto;
 import com.moeasy.moeasy.dto.survey.SurveySaveDto;
-import com.moeasy.moeasy.dto.survey.SurveySaveRequestDto;
+import com.moeasy.moeasy.dto.survey.request.SurveySaveRequestDto;
+import com.moeasy.moeasy.dto.survey.response.SurveySaveResponseDto;
 import com.moeasy.moeasy.repository.question.QuestionRepository;
 import com.moeasy.moeasy.repository.survey.SurveyRepository;
-import jakarta.persistence.EntityNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 
@@ -31,10 +32,7 @@ public class SaveSurveyService {
   private final ObjectMapper objectMapper;
 
   public Long updateSurvey(SurveySaveRequestDto surveySaveRequestDto) {
-    Survey survey = surveyRepository.findByQuestionId(surveySaveRequestDto.getQuestionId())
-        .orElseThrow(() -> new EntityNotFoundException(
-            "Id : " + surveySaveRequestDto.getQuestionId() + "를 통해 조회되는 survey 가 없습니다."));
-
+    Survey survey = extractSurvey(surveySaveRequestDto);
     String resultsJson = survey.getResultsJson();
 
     try {
@@ -98,6 +96,12 @@ public class SaveSurveyService {
     return survey.getId();
   }
 
+  private Survey extractSurvey(SurveySaveRequestDto surveySaveRequestDto) {
+    return surveyRepository.findByQuestionId(surveySaveRequestDto.getQuestionId())
+        .orElseThrow(() -> CustomErrorException.from(HttpStatus.NOT_FOUND,
+            "Id : " + surveySaveRequestDto.getQuestionId() + "를 통해 조회되는 survey 가 없습니다."));
+  }
+
   private Map<String, QuestionAnswerDto> findByQuestion(
       List<Map<String, QuestionAnswerDto>> aggregates, String question) {
     for (Map<String, QuestionAnswerDto> m : aggregates) {
@@ -108,11 +112,8 @@ public class SaveSurveyService {
     return null;
   }
 
-  public Map<String, String> update(SurveySaveRequestDto surveySaveRequestDto) {
-    Map<String, String> surveyData = new HashMap<>();
+  public SurveySaveResponseDto update(SurveySaveRequestDto surveySaveRequestDto) {
     String surveyId = String.valueOf(updateSurvey(surveySaveRequestDto));
-    surveyData.put("surveyId", surveyId);
-    surveyData.put("surveyUrl", "https://mo-easy.com/reporting/" + surveyId);
-    return surveyData;
+    return SurveySaveResponseDto.from(surveyId, "https://mo-easy.com/reporting/" + surveyId);
   }
 }
