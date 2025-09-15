@@ -2,9 +2,9 @@ package com.moeasy.moeasy.controller.survey;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.moeasy.moeasy.config.response.responseDto.ErrorResponseDto;
-import com.moeasy.moeasy.config.response.responseDto.SuccessResponseDto;
 import com.moeasy.moeasy.config.swagger.SwaggerExamples;
-import com.moeasy.moeasy.dto.survey.SurveySaveRequestDto;
+import com.moeasy.moeasy.dto.survey.request.SurveySaveRequestDto;
+import com.moeasy.moeasy.dto.survey.response.SurveySaveResponseDto;
 import com.moeasy.moeasy.service.survey.GetSurveyService;
 import com.moeasy.moeasy.service.survey.SaveSurveyService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -61,8 +61,7 @@ public class SurveyController {
       security = {}
   )
   @PostMapping("/survey")
-  public SuccessResponseDto saveSurvey(@RequestBody SurveySaveRequestDto surveySaveRequestDto) {
-    return SuccessResponseDto.success(200, "성공적으로 저장하였습니다.",
-        saveSurveyService.update(surveySaveRequestDto));
+  public SurveySaveResponseDto saveSurvey(@RequestBody SurveySaveRequestDto surveySaveRequestDto) {
+    return saveSurveyService.update(surveySaveRequestDto);
   }
 }
