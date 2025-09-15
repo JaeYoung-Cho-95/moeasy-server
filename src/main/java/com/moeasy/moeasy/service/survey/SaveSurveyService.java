@@ -1,5 +1,6 @@
 package com.moeasy.moeasy.service.survey;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.moeasy.moeasy.config.response.custom.CustomErrorException;
@@ -11,7 +12,6 @@ import com.moeasy.moeasy.dto.survey.request.SurveySaveRequestDto;
 import com.moeasy.moeasy.dto.survey.response.SurveySaveResponseDto;
 import com.moeasy.moeasy.repository.question.QuestionRepository;
 import com.moeasy.moeasy.repository.survey.SurveyRepository;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -35,65 +35,90 @@ public class SaveSurveyService {
     Survey survey = extractSurvey(surveySaveRequestDto);
     String resultsJson = survey.getResultsJson();
 
-    try {
-      TypeReference<List<Map<String, QuestionAnswerDto>>> typeRef =
-          new TypeReference<>() {
-          };
-      List<Map<String, QuestionAnswerDto>> aggregates =
-          objectMapper.readValue(resultsJson, typeRef);
+    List<Map<String, QuestionAnswerDto>> aggregates = sumAggregates(
+        surveySaveRequestDto, resultsJson);
 
-      for (Map<String, String> answerMap : surveySaveRequestDto.getResults()) {
-        for (Map.Entry<String, String> e : answerMap.entrySet()) {
-          String question = e.getKey();
-          String answer = e.getValue();
+    saveSurvey(aggregates, survey);
+    saveQuestion(survey);
+    return survey.getId();
+  }
 
-          Map<String, QuestionAnswerDto> perQuestion = findByQuestion(aggregates, question);
-          if (perQuestion == null) {
-            log.warn("집계 템플릿에서 질문을 찾지 못했습니다. question={}", question);
-            continue;
+  private List<Map<String, QuestionAnswerDto>> sumAggregates(
+      SurveySaveRequestDto surveySaveRequestDto,
+      String resultsJson) {
+    List<Map<String, QuestionAnswerDto>> aggregates = createAggregates(
+        resultsJson);
+
+    for (Map<String, String> answerMap : surveySaveRequestDto.getResults()) {
+      for (Map.Entry<String, String> e : answerMap.entrySet()) {
+        String question = e.getKey();
+        String answer = e.getValue();
+
+        Map<String, QuestionAnswerDto> perQuestion = findByQuestion(aggregates, question);
+        if (perQuestion == null) {
+          log.warn("집계 템플릿에서 질문을 찾지 못했습니다. question={}", question);
+          continue;
+        }
+
+        QuestionAnswerDto qa = perQuestion.get(question);
+        Map<String, Object> counts = qa.getMultipleAnswers();
+
+        if (counts == null) {
+          counts = new LinkedHashMap<>();
+          counts.put("others", new ArrayList<>());
+          qa.setMultipleAnswers(counts);
+        }
+
+        if (counts.containsKey(answer) && counts.get(answer) instanceof Number) {
+          Number n = (Number) counts.get(answer);
+          counts.put(answer, n.intValue() + 1);
+        } else {
+          Object othersObj = counts.get("others");
+          if (!(othersObj instanceof List)) {
+            othersObj = new ArrayList<>();
+            counts.put("others", othersObj);
           }
-
-          QuestionAnswerDto qa = perQuestion.get(question);
-          Map<String, Object> counts = qa.getMultipleAnswers();
-          if (counts == null) {
-            counts = new LinkedHashMap<>();
-            counts.put("others", new ArrayList<>());
-            qa.setMultipleAnswers(counts);
-          }
-
-          if (counts.containsKey(answer) && counts.get(answer) instanceof Number) {
-            Number n = (Number) counts.get(answer);
-            counts.put(answer, n.intValue() + 1);
-          } else {
-            Object othersObj = counts.get("others");
-            if (!(othersObj instanceof List)) {
-              othersObj = new ArrayList<>();
-              counts.put("others", othersObj);
-            }
-            @SuppressWarnings("unchecked")
-            List<Object> others = (List<Object>) othersObj;
-            others.add(answer);
-          }
+          @SuppressWarnings("unchecked")
+          List<Object> others = (List<Object>) othersObj;
+          others.add(answer);
         }
       }
+    }
+    return aggregates;
+  }
 
+  private void saveQuestion(Survey survey) {
+    Question question = survey.getQuestion();
+    if (question == null) {
+      log.warn("Survey(id={})에 연결된 Question이 없습니다.", survey.getId());
+    } else {
+      question.increaseCount();
+      questionRepository.save(question);
+    }
+  }
+
+  private void saveSurvey(List<Map<String, QuestionAnswerDto>> aggregates, Survey survey) {
+    try {
       String updatedJson = objectMapper.writeValueAsString(SurveySaveDto.from(aggregates));
       survey.updateResultsJson(updatedJson);
       survey.updateLastUpdated();
       surveyRepository.save(survey);
-
-      Question question = survey.getQuestion();
-      if (question == null) {
-        log.warn("Survey(id={})에 연결된 Question이 없습니다.", survey.getId());
-      } else {
-        question.increaseCount();
-        questionRepository.save(question);
-      }
-    } catch (IOException e) {
-      throw new RuntimeException("Survey results JSON 처리 중 오류가 발생했습니다.", e);
+    } catch (JsonProcessingException e) {
+      throw CustomErrorException.from(HttpStatus.INTERNAL_SERVER_ERROR,
+          "설문지 저장을 위해 json 변환 중 error 발생");
     }
+  }
 
-    return survey.getId();
+  private List<Map<String, QuestionAnswerDto>> createAggregates(String resultsJson) {
+    TypeReference<List<Map<String, QuestionAnswerDto>>> typeRef = new TypeReference<>() {
+    };
+
+    try {
+      return objectMapper.readValue(resultsJson, typeRef);
+    } catch (JsonProcessingException e) {
+      throw CustomErrorException.from(HttpStatus.INTERNAL_SERVER_ERROR,
+          "설문 결과지를 json 으로 변환 중 에러 발생");
+    }
   }
 
   private Survey extractSurvey(SurveySaveRequestDto surveySaveRequestDto) {
